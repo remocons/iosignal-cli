@@ -1,6 +1,6 @@
 {
   "name": "iosignal-cli",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "IOSignal server and client CLI program.",
   "type": "module",
   "bin": {
@@ -16,18 +16,26 @@
   },
   "license": "MIT",
   "dependencies": {
+    "boxen": "^7.1.1",
+    "chalk": "^5.3.0",
     "commander": "^11.1.0",
     "iosignal": "^1.0.0",
     "meta-buffer-pack": "^1.3.1",
     "redis": "^4.6.12"
-  }
-  ,
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/remocons/iosignal-cli.git"
   },
   "homepage": "https://iosignal.net",
   "keywords": [
-    "io","pubsub","arduino","iot","auth","signal","CLI","remocon"
+    "io",
+    "pubsub",
+    "arduino",
+    "iot",
+    "auth",
+    "signal",
+    "CLI",
+    "remocon"
   ]
 }

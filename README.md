@@ -13,7 +13,9 @@ $ npm install -g iosignal-cli
 
 # If NO Permissioin error, use sudo prefix.
 $ sudo npm install -g iosignal-cli
+
 ```
+
 windows as admin permission
 ```sh
 # global install.
@@ -28,9 +30,39 @@ $ io-server
 # start server with default option.
 # default. open port 7777 with WebSocket. 
 
+   ┌─────────────────────────────────────────┐
+                                            
+      WebSocket: Browser or nodejs client   
+                                            
+      - Local:    ws://localhost:7777       
+      - Network:  ws://192.168.0.204:7777   
+                                            
+   └─────────────────────────────────────────┘
+
 
 $ io-server -l 5555 
 # you can specify listen port number
+
+   ┌───────────────────────────────────────────┐
+                                              
+      WebSocket: Browser or nodejs client     
+                                              
+      - Local:    ws://localhost:5555         
+      - Network:  ws://192.168.0.204:5555     
+                                              
+      CongSocket: nodejs client or CLI        
+                                              
+      - Local:    cong://localhost:8888       
+      - Network:  cong://192.168.0.204:8888   
+                                              
+      CongSocket: Arduino client              
+                                              
+      - host: 192.168.0.204                   
+      - port: 8888                            
+                                              
+   └───────────────────────────────────────────┘
+
+
 
 $ io-server -l 0 -L 5555
 # use number 0 to disable WebSocket service.
@@ -41,7 +73,8 @@ $ io-server -l 0 -L 5555
 
 
 ```sh
-$ io # or io alias
+$ io 
+# io is an alias name of io-clinet
 # connect to localhost:7777 with websocket.
 
 # use -c to define websocket url and port number.

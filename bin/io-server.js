@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 
+import { createClient } from 'redis';
+import { program } from 'commander'
+import { version } from './getVersion.js'
+import { serverInfo } from './serverInfo.js';
 import {
   Server, serverOption, Auth_File, Auth_Env, Auth_Redis,
   api_reply, api_sudo, RedisAPI
 } from 'iosignal'
-import { createClient } from 'redis';
-import { program } from 'commander'
-import { version } from './getVersion.js'
+
+
 
 program
   .version(version)
@@ -95,5 +98,4 @@ if (options.showOptions) {
   console.log('server api list', server.apiNames)
 }
 
-
-
+console.log( serverInfo( serverOption.port , serverOption.congPort ))
