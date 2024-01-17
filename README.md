@@ -13,9 +13,7 @@ $ npm install -g iosignal-cli
 
 # If NO Permissioin error, use sudo prefix.
 $ sudo npm install -g iosignal-cli
-
 ```
-
 windows as admin permission
 ```sh
 # global install.
@@ -40,7 +38,7 @@ $ io-server
    └─────────────────────────────────────────┘
 
 
-$ io-server -l 5555 
+$ io-server -l 5555 -L 8888
 # you can specify listen port number
 
    ┌───────────────────────────────────────────┐
