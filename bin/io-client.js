@@ -95,7 +95,6 @@ program
   .version(version)
   .usage('[options] (--connect <url> )')
   .option('-t, --timeout <milliseconds>', 'ping period & timeout')
-  .option('-s, --show-message <none|message|frame>', 'show receive message. ')
   .option('-c, --connect <url>', 'connect to a server')
   .option('-i, --id <id>', 'userId')
   .option('-k, --key <key>', 'userKey')
@@ -104,12 +103,12 @@ program
   .parse(process.argv)
 
 const options = program.opts()
+const defaultWebSocketPort = 7777;
 
 console.log(options)
 
-
 if (!options.connect) {
-  options.connect = 'localhost:' + serverOption.port;
+  options.connect = 'localhost:' + defaultWebSocketPort;
 }
 
 
@@ -389,6 +388,7 @@ wsConsole.on('line', (data) => {
         )
     }
   } else {
+    io.send( data )
   }
   wsConsole.prompt()
 })

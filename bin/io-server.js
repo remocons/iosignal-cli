@@ -22,14 +22,13 @@ program
   .option('-r, --auth-redis', 'connect to redis. if exist use env REDIS_HOST, REDIS_PORT or localhost:6379')
   .option('-t, --timeout <milliseconds>', 'ping period & timeout')
   .option('-m, --metric <type>', 'show metric <number> 1:traffic, 2:echo')
-  .option('-s, --show-message <none|message|frame>', 'show receive message. ')
+  .option('-s, --show-message <none|message>', 'show receive message. ')
   .option('-f, --file-logger', 'write log files.')
   .option('-a, --api-list [list...]', 'one or multiple api names:  -a api_1 api_2 ')
   .option('-o, --show-options', 'show server init options.')
   .parse(process.argv)
 
 const options = program.opts()
-
 
 if (options.fileLogger) {
   serverOption.fileLogger.connection.use = true;
@@ -38,7 +37,7 @@ if (options.fileLogger) {
 }
 
 if (options.listen) {
-  serverOption.port = options.listen
+  serverOption.port = parseInt(options.listen)
 }
 
 if (options.listenCongport) {
@@ -77,7 +76,7 @@ if (options.authFile) {
   redisClient.connect();
   authManager = new Auth_Redis(redisClient)
 } else {
-  console.log("No authentication support.")
+  // console.log("No authentication support.")
 
 }
 
