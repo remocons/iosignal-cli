@@ -386,6 +386,16 @@ $ io-server -l 7777 -L 8888
 # -L option for CongSocket port ( Arduino connection)
 ```
 
+### Local Network IP Address
+
+If you need the IP address of the server to access it from your local network, you can check the local network IP address of the server.
+
+```sh
+$ ioip
+192.168.0.72
+```
+
+
 ### IOSignal Arduino Library
 
 Search for `IOSignal` in the Arduino library manager and install it, or see the [`iosignal-arduino`](https://github.com/remocons/iosignal-arduino) github repository

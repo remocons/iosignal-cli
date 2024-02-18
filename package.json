@@ -1,6 +1,6 @@
 {
   "name": "iosignal-cli",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "IOSignal server and client CLI program.",
   "type": "module",
   "bin": {
@@ -8,6 +8,7 @@
     "io-client": "./bin/io-client.js",
     "ios": "./bin/io-server.js",
     "io": "./bin/io-client.js",
+    "ioip": "./bin/ioip.js",
     "io-keygen": "./bin/io-keygen.js"
   },
   "author": {
@@ -19,7 +20,7 @@
     "boxen": "^7.1.1",
     "chalk": "^5.3.0",
     "commander": "^11.1.0",
-    "iosignal": "^1.3.1",
+    "iosignal": "^1.3.2",
     "meta-buffer-pack": "^1.3.1",
     "redis": "^4.6.12"
   },

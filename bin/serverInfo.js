@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import boxen from 'boxen';
 
 
-function getNetworkAddress (){
+export function getNetworkAddress (){
     for (const interfaceDetails of Object.values(networkInterfaces)) {
       if (!interfaceDetails) continue;
   
@@ -66,6 +66,3 @@ export function serverInfo ( wsPort, congPort ){
     return boxen(message, { padding: 1, borderColor: 'green', margin: 1, })
 
 }
-
-
-
