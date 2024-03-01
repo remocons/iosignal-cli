@@ -57,10 +57,6 @@ class Console extends EventEmitter {
   print(type, msg, color) {
     if (tty.isatty(1)) {
       this.clear()
-
-      // if (options.execute) color = type = '';
-      // else if (!options.color) color = '';
-
       this.stdout.write(color + type + msg + Console.Colors.Default + '\n')
       this.prompt()
     } else if (type === Console.Types.Incoming) {

@@ -98,3 +98,7 @@ if (options.showOptions) {
 }
 
 console.log( serverInfo( serverOption.port , serverOption.congPort ))
+
+if( !serverOption.port && !serverOption.congPort ){
+  process.exit()
+}
