@@ -1,6 +1,6 @@
 {
   "name": "iosignal-cli",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "IOSignal server and client CLI program.",
   "type": "module",
   "bin": {
@@ -12,17 +12,17 @@
     "io-keygen": "./bin/io-keygen.js"
   },
   "author": {
-    "name": "Lee Dongeun",
-    "email": "sixgen@gmail.com"
+    "name": "Taeo Lee",
+    "email": "taeo.mocha@gmail.com"
   },
   "license": "MIT",
   "dependencies": {
-    "boxen": "^7.1.1",
+    "boxen": "^8.0.1",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
-    "iosignal": "^1.7.0",
+    "iosignal": "^1.8.0",
     "meta-buffer-pack": "^1.4.0",
-    "redis": "^4.6.12"
+    "redis": "^4.7.0"
   },
   "repository": {
     "type": "git",
