@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { IO, IOCongSocket, ENC_MODE, serverOption } from 'iosignal'
+import { IOWS, IOCongSocket, ENC_MODE, serverOption } from 'iosignal'
 import { EventEmitter } from 'events'
 import readline from 'readline'
 import tty from 'tty'
@@ -123,7 +123,7 @@ if (connectUrl.indexOf('cong') === 0) {
   if (!connectUrl.match(/\w+:\/\/.*$/i)) {
     connectUrl = `ws://${connectUrl}`
   }
-  io = new IO(connectUrl)
+  io = new IOWS(connectUrl)
 }
 
 if (options.id && options.key) {

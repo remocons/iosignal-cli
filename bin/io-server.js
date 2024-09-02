@@ -97,8 +97,8 @@ if (options.showOptions) {
   console.log('server api list', server.apiNames)
 }
 
-console.log( serverInfo( serverOption.port , serverOption.congPort ))
+console.log(serverInfo(serverOption.port, serverOption.congPort))
 
-if( !serverOption.port && !serverOption.congPort ){
+if (!serverOption.port && !serverOption.congPort) {
   process.exit()
 }

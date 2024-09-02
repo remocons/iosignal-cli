@@ -1,10 +1,9 @@
 #!/usr/bin/env node
-
-import { RAND } from 'iosignal'
+import { Boho } from 'iosignal'
 
 // base64 from random n-byte 
 function rand_b64(srcByteSize) {
-  return RAND(srcByteSize).toString('base64')
+  return Boho.RAND(srcByteSize).toString('base64')
 }
 
 // accept 1 ~ 12
@@ -14,7 +13,7 @@ function rand_number_string(len) {
   let bigNumberBuffer, n, nString;
   const cropFrom = 1;
   do {
-    bigNumberBuffer = RAND(8);
+    bigNumberBuffer = Boho.RAND(8);
     n = bigNumberBuffer.readBigUInt64LE(0);
     nString = n.toString()
     // console.log('>', n )
@@ -26,6 +25,7 @@ function rand_number_string(len) {
 
 
 let key20 = rand_b64(15)
+let key40 = rand_b64(30)
 let did4 = rand_b64(3)
 let did8 = rand_b64(6)
 let randNumber4 = rand_number_string(4)
@@ -35,11 +35,13 @@ let randNumber8 = rand_number_string(8)
 // console.log('random 3bytes as base64 4chars: ', did )
 
 console.log('\n random values')
-console.log('+------------------------------------+')
-console.log('| ID:', did4, ' KEY:', key20)
-console.log('+------------------------------------+')
+console.log('+----------------------------------------------------+')
+console.log('| ID:', did4, ' KEY L20:', key20)
+console.log('+----------------------------------------------------+')
 console.log('| ID_KEY: ', did4 + '.' + key20)
-console.log('+------------------------------------+')
+console.log('+----------------------------------------------------+')
 console.log('| numbers: ', randNumber4, randNumber8)
-console.log('+------------------------------------+')
+console.log('+----------------------------------------------------+')
+console.log('| b64_L40: ', key40)
+console.log('+----------------------------------------------------+')
 console.log('')
