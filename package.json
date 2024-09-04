@@ -21,7 +21,6 @@
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
     "iosignal": "^2.1.0",
-    "meta-buffer-pack": "^2.0.3",
     "redis": "^4.7.0"
   },
   "repository": {
