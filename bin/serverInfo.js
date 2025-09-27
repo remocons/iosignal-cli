@@ -17,12 +17,12 @@ export function getNetworkAddress (){
   };
 
 
-export function serverInfo ( wsPort, congPort ){
-  // console.log('wsPort', wsPort, 'congPort', congPort)
+export function serverInfo ( server ){
+
     let ip = getNetworkAddress();
     let message
     
-    if( wsPort || congPort ){
+    if( server.port == 0 || server.port || server.congPort == 0 || server.congPort ){
       message = chalk.green('Serving');
     }else{
       message = chalk.green('please use -l and -L option to select port number.');
@@ -39,27 +39,27 @@ export function serverInfo ( wsPort, congPort ){
     const prefix = '- '
     const space = '    '
 
-    if(wsPort){
+    if(server.port == 0 || server.port){
       message += `\n\n`;
       message += chalk.green('IOSignal Over WebSocket');
       message += chalk.yellow('\n\n Web Browser & Node.js');
-      message += `\n ${chalk.bold(`${prefix}Local:`)}${space}ws://localhost:${wsPort}`;
-      message += `\n ${chalk.bold('- Network:')}  ws://${ip}:${wsPort}`;
+      message += `\n ${chalk.bold(`${prefix}Local:`)}${space}ws://localhost:${server.port}`;
+      message += `\n ${chalk.bold('- Network:')}  ws://${ip}:${server.port}`;
     }else{
 
     }
 
-    if(congPort){
+    if(server.congPort == 0 || server.congPort){
         message += `\n\n`;
         message += chalk.green('IOSignal Over CongSocket');
         message += chalk.yellow('\n\n Node.js');
 
-        message += `\n ${chalk.bold(`${prefix}Local:`)}${space}cong://localhost:${congPort}`;
-        message += `\n ${chalk.bold('- Network:')}  cong://${ip}:${congPort}`;
+        message += `\n ${chalk.bold(`${prefix}Local:`)}${space}cong://localhost:${server.congPort}`;
+        message += `\n ${chalk.bold('- Network:')}  cong://${ip}:${server.congPort}`;
         
         message += chalk.yellow('\n\n Arduino');
         message += `\n ${chalk.bold(`${prefix}host:`)} ${ip}`;
-        message += `\n ${chalk.bold('- port:')} ${congPort }`;
+        message += `\n ${chalk.bold('- port:')} ${server.congPort }`;
 
     }
 

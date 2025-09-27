@@ -2,13 +2,15 @@
 
 import { createClient } from 'redis';
 import { program } from 'commander'
-import { version } from './getVersion.js'
 import { serverInfo } from './serverInfo.js';
 import {
   Server, serverOption, Auth_File, Auth_Env, Auth_Redis,
-  api_reply, api_sudo, RedisAPI
+  api_reply, api_sudo, RedisAPI, version as iosignal_version
 } from 'iosignal'
 
+import pkg from '../package.json' with { type: 'json' };
+const cli_version = pkg.version;
+const version = `CLI ${cli_version} IOSignal ${iosignal_version}`
 
 
 program
@@ -30,18 +32,11 @@ program
 
 const options = program.opts()
 
+// global shared serverOption
 if (options.fileLogger) {
   serverOption.fileLogger.connection.use = true;
   serverOption.fileLogger.auth.use = true;
   serverOption.fileLogger.attack.use = true;
-}
-
-if (options.listen) {
-  serverOption.port = parseInt(options.listen)
-}
-
-if (options.listenCongport) {
-  serverOption.congPort = parseInt(options.listenCongport)
 }
 
 if (options.showMessage) {
@@ -56,6 +51,15 @@ if (options.timeout) {
   serverOption.timeout = options.timeout
 }
 
+// private port, congPort
+let privateServerOptions = { };
+if (options.listen) {
+  privateServerOptions.port = parseInt(options.listen)
+}
+
+if (options.listenCongport) {
+  privateServerOptions.congPort = parseInt(options.listenCongport)
+}
 
 let authManager;
 let redisClient;
@@ -81,7 +85,7 @@ if (options.authFile) {
 }
 
 
-const server = new Server(serverOption, authManager)
+const server = new Server( privateServerOptions , authManager);
 
 if (options.apiList && options.apiList.length > 0) {
   let apiList = options.apiList
@@ -93,12 +97,14 @@ if (options.apiList && options.apiList.length > 0) {
 }
 
 if (options.showOptions) {
-  console.log('ServerOptions:', serverOption)
+  console.log('global ServerOptions:', serverOption)
+  console.log('private ServerOptions:', privateServerOptions)
   console.log('server api list', server.apiNames)
 }
 
-console.log(serverInfo(serverOption.port, serverOption.congPort))
-
-if (!serverOption.port && !serverOption.congPort) {
-  process.exit()
-}
+setTimeout(()=>{
+  console.log(serverInfo(server))
+  if ( server.port === null && server.congPort === null ) {
+    process.exit();
+  }
+},1000)

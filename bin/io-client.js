@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 
-import { IO, IOCongSocket, ENC_MODE, serverOption } from 'iosignal'
 import { EventEmitter } from 'events'
 import readline from 'readline'
 import tty from 'tty'
 import { program } from 'commander'
-import { version } from './getVersion.js'
+
+import { IO, IOCongSocket, ENC_MODE, version as iosignal_version } from 'iosignal'
+import pkg from '../package.json' with { type: 'json' };
+const cli_version = pkg.version;
+const version = `CLI ${cli_version} IOSignal ${iosignal_version}`
+
 
 class Console extends EventEmitter {
   constructor() {
