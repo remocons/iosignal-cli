@@ -141,6 +141,8 @@ io.listen('@', (...args) => {
   console.log('rcv @', args)
 })
 
+
+
 if (options.joinChannel) {
   console.log('options joinchannel', options.joinChannel)
   io.channels.add(options.joinChannel)
@@ -189,6 +191,19 @@ io.on('over_size', () => {
     Console.Colors.Yellow)
 })
 
+io.on('echo', (...args) => {
+    wsConsole.print(
+    Console.Types.Control,
+    `ECHO ${args}`,
+    Console.Colors.Yellow)
+})
+io.on('iam_res', (...args) => {
+  // console.log('log: ', args)
+    wsConsole.print(
+    Console.Types.Incoming,
+    `IAM_RES ${args}`,
+    Console.Colors.Yellow)
+})
 
 io.on('message', (data, isBinary) => {
 
@@ -388,7 +403,12 @@ wsConsole.on('line', (data) => {
         )
     }
   } else {
-    io.send( data )
+    // io.send( data )
+        wsConsole.print(
+          Console.Types.Error,
+          'command list: .signal .sig .listen .publish .pub .subscribe .sub .unsub .ping .pong .id .iam .open .connect .close .login .auth .quit .exit',
+          Console.Colors.Yellow
+        )
   }
   wsConsole.prompt()
 })
