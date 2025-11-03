@@ -1,5 +1,5 @@
 # IOSignal CLI 
-[ [한국어](README.ko.md) | English ]
+[ [한국어](./README.ko.md) | English ]
 
 IOSignal facilitates real-time communication among web browsers, Node.js applications, and Arduino devices. It also offers secure authentication and encrypted communication. With its built-in signaling protocol, the server can be used without additional programming.
 
@@ -132,50 +132,6 @@ opening CongSocket Server: 8888
 
 ```
 
-### Viewing Metrics
-
-- `-m 1`: Displays channels, clients, and traffic.
-- `-m 2`: Displays clients.
-- `-m 3`: Displays channels.
-
-```sh
-
-$ ios -l 7777 -m 1
-...
-
-monitor metric type: 1
-┌─────────┬───────────┬───────────┬──────────┬──────────┬──────────────┐
-│ (index) │    rss    │ heapTotal │ heapUsed │ external │ arrayBuffers │
-├─────────┼───────────┼───────────┼──────────┼──────────┼──────────────┤
-│    0    │ 108232704 │ 57294848  │ 24523112 │ 1389925  │    59260     │
-└─────────┴───────────┴───────────┴──────────┴──────────┴──────────────┘
-┌─────────┬──────────┬─────────┬──────────┬─────────┬─────────┐
-│ (index) │ lastSSID │ remotes │ channels │ txBytes │ rxBytes │
-├─────────┼──────────┼─────────┼──────────┼─────────┼─────────┤
-│    0    │    2     │    2    │    1     │   57    │   18    │
-└─────────┴──────────┴─────────┴──────────┴─────────┴─────────┘
-
-
-$ ios -l 7777 -m 2
-...
-monitor metric type: 2
-┌─────────┬───────────────┐
-│ (index) │    Values     │
-├─────────┼───────────────┤
-│    0    │ '#1:?9P-i(7)' │
-│    1    │ '#2:?zNuW(7)' │
-└─────────┴───────────────┘
-
-
-$ ios -l 7777 -m 3
-...
-monitor metric type: 3
-┌─────────┬───────────────────────┐
-│ (index) │        Values         │
-├─────────┼───────────────────────┤
-│    0    │ 'PRIVATE:#homeButton' │
-└─────────┴───────────────────────┘
-```
 
 ## IOSignal Client
 

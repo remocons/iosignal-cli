@@ -137,8 +137,8 @@ if (options.id && options.key) {
 }
 
 
-io.listen('@', (...args) => {
-  console.log('rcv @', args)
+io.listen('@', (tag, ...args) => {
+  console.log('CID Message: ', tag, args)
 })
 
 
@@ -205,28 +205,10 @@ io.on('iam_res', (...args) => {
     Console.Colors.Yellow)
 })
 
-io.on('message', (data, isBinary) => {
-
-  let moreBytesIndicator = ""
-  if (isBinary) {
-    let buffer
-    const displayBufferLimit = 20
-    if (data.byteLength > displayBufferLimit) {
-      buffer = Buffer.from(data, 0, displayBufferLimit);
-      moreBytesIndicator = "..."
-    } else {
-      buffer = Buffer.from(data);
-    }
-
-    let prn = `${buffer.toString('hex')}${moreBytesIndicator} [${data.byteLength} bytes total]`;
-    if (wsConsole.showIncommingMessage) wsConsole.print(Console.Types.Incoming, `rx: bin [hex] ${prn}`, Console.Colors.Green)
-
-  } else {
-    if (wsConsole.showIncommingMessage) wsConsole.print(Console.Types.Incoming, `rx: text: ${data}`, Console.Colors.Green)
-  }
+io.on('message',(tag,...args)=>{
+     wsConsole.print(Console.Types.Incoming, `message: ${tag} ${args}`, Console.Colors.Green)
 })
 
-// to send frame message.
 wsConsole.on('line', (data) => {
   if (data[0] === '.') {
     const toks = data.split(/\s+/)
@@ -346,12 +328,13 @@ wsConsole.on('line', (data) => {
       case 'listen':
         toks.shift()
         let tag = toks[0]
-        console.log('listen tag', tag)
-        io.listen(tag, (...args) => {
-          console.log(`subscribe & listen  tag: ${tag} args:`, args)
+        io.subscribe( tag )
+        console.log('subscribe tag', tag)
+        // io.listen(tag, (tag, ...args) => {
+        //   console.log(`subscribe & listen  tag: ${tag} args:`, args)
 
-        })
-        io.subscribe_memory_channels()
+        // })
+        // io.subscribe_memory_channels()
         break;
 
 
