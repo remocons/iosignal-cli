@@ -4,8 +4,8 @@ import { createClient } from 'redis';
 import { program } from 'commander'
 import { serverInfo } from './serverInfo.js';
 import {
-  Server, serverOption, Auth_File, Auth_Env, Auth_Redis,
-  api_reply, api_sudo, RedisAPI, version as iosignal_version
+  Server, serverOption, api_reply, api_sudo, RedisAPI, version as iosignal_version,
+  BohoAuth, FileKeyProvider, StringKeyProvider, RedisKeyProvider
 } from 'iosignal'
 
 import pkg from '../package.json' with { type: 'json' };
@@ -67,18 +67,18 @@ let redisClient;
 if (options.authFile) {
   console.log("auth data origin: auth_file")
   let authFilePath = options.authFile;
-  authManager = new Auth_File(authFilePath)
+  authManager = new BohoAuth( new FileKeyProvider(authFilePath) )
 } else if (options.authParam) {
-  authManager = new Auth_Env(options.authParam)
+  authManager = new BohoAuth( new StringKeyProvider(options.authParam) )
 } else if (options.authEnv) {
-  authManager = new Auth_Env()
+  authManager = new BohoAuth( new StringKeyProvider(options.authEnv) )
 } else if (options.authRedis) {
   console.log("auth data origin: redis")
   // console.log('####### default redis server url: redis://localhost:6379 ' )   
   redisClient = createClient();
   redisClient.on('error', (err) => console.log('Redis Client Error', err));
   redisClient.connect();
-  authManager = new Auth_Redis(redisClient)
+  authManager = new BohoAuth( new RedisKeyProvider( redisClient))
 } else {
   // console.log("No authentication support.")
 
@@ -92,7 +92,14 @@ if (options.apiList && options.apiList.length > 0) {
   console.log('api list', apiList)
   if (apiList.includes('reply')) server.api('reply', api_reply)
   if (apiList.includes('sudo')) server.api('sudo', api_sudo)
-  if (apiList.includes('redis')) server.api('redis', new RedisAPI(redisClient))
+  if (apiList.includes('redis')){
+    if(!redisClient){
+      redisClient = createClient();
+      redisClient.on('error', (err) => console.log('Redis Client Error', err));
+      redisClient.connect();
+    }
+    server.api('redis', new RedisAPI(redisClient))
+  } 
 
 }
 
