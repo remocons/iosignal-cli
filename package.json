@@ -1,6 +1,6 @@
 {
   "name": "iosignal-cli",
-  "version": "4.6.0",
+  "version": "4.8.0",
   "description": "IOSignal server and client CLI program.",
   "type": "module",
   "bin": {
@@ -21,7 +21,7 @@
     "boxen": "8.0.1",
     "chalk": "5.6.2",
     "commander": "13.1.0",
-    "iosignal": "^4.6.0",
+    "iosignal": "^4.8.0",
     "redis": "4.7.1"
   },
   "repository": {

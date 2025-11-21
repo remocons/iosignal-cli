@@ -167,7 +167,8 @@ io.on('ready', () => {
 })
 
 io.on('close', () => {
-  wsConsole.print(Console.Types.Control, `closed`, Console.Colors.Yellow)
+  let date = new Date().toLocaleTimeString()
+  wsConsole.print(Console.Types.Control, `closed ${date}`, Console.Colors.Yellow)
 })
 
 
@@ -206,7 +207,13 @@ io.on('iam_res', (...args) => {
 })
 
 io.on('message',(tag,...args)=>{
-     wsConsole.print(Console.Types.Incoming, `message: ${tag} ${args}`, Console.Colors.Green)
+  let msg ;
+  if(typeof args[0] == 'object'){
+    msg = JSON.stringify( args[0])
+  }else{
+    msg = args;
+  }
+  wsConsole.print(Console.Types.Incoming, `message: ${tag} ${msg}`, Console.Colors.Green)
 })
 
 wsConsole.on('line', (data) => {
@@ -255,7 +262,7 @@ wsConsole.on('line', (data) => {
       case 'sudo':
         toks.shift()
         console.log('sudo toks', toks)
-        io.req('sudo', ...toks).then(res => {
+        io.call('sudo', ...toks).then(res => {
           if (res.ok) {
             console.log('>> sudo response:', res.body)
           } else {
@@ -304,18 +311,17 @@ wsConsole.on('line', (data) => {
         io.set(toks[1])
         break;
 
-      case 'api':
-      case 'req':
+      case 'call':
         toks.shift()
         if (toks.length < 2) {
           wsConsole.print(
             Console.Types.Error,
-            '[.req need at least two params]  req target command [, ..args]',
+            '[.call need at least two params]  call target command [, ..args]',
             Console.Colors.Yellow
           )
           return
         }
-        io.req(...toks).then(result => {
+        io.call(...toks).then(result => {
           console.log('>> response:', result)
         }).catch(e => {
           console.log(e)
@@ -328,13 +334,13 @@ wsConsole.on('line', (data) => {
       case 'listen':
         toks.shift()
         let tag = toks[0]
-        io.subscribe( tag )
-        console.log('subscribe tag', tag)
-        // io.listen(tag, (tag, ...args) => {
-        //   console.log(`subscribe & listen  tag: ${tag} args:`, args)
-
-        // })
-        // io.subscribe_memory_channels()
+        if(tag){
+          io.subscribe( tag )
+          let tagList = tag.split(',')
+          tagList.forEach( (v)=>{ 
+            io.channels.add( v )
+          })
+        }
         break;
 
 
