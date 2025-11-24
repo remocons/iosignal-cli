@@ -108,7 +108,8 @@ const defaultWebSocketPort = 7777;
 console.log(options)
 
 if (!options.connect) {
-  options.connect = 'localhost:' + defaultWebSocketPort;
+  // options.connect = 'localhost:' + defaultWebSocketPort;
+  options.connect = 'wss://io.remocon.kr/ws'
 }
 
 
@@ -185,6 +186,14 @@ io.on('auth_fail', () => {
     `Boho auth_fail.`,
     Console.Colors.Yellow)
 })
+
+io.on('auth_clear', () => {
+  wsConsole.print(
+    Console.Types.Control,
+    `Boho auth_clear.`,
+    Console.Colors.Yellow)
+})
+
 io.on('over_size', () => {
   wsConsole.print(
     Console.Types.Control,
@@ -256,7 +265,7 @@ wsConsole.on('line', (data) => {
         break;
 
       case 'id':
-        console.log(`cid: ${io.cid} level: ${io.level}`)
+        console.log(`state: ${io.stateName} cid: ${io.cid} level: ${io.level}`)
         break;
 
       case 'sudo':
