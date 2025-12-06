@@ -358,5 +358,3 @@ $ ioip
 
 Arduino 라이브러리 관리자에서 `IOSignal`을 검색하여 설치하거나, [`iosignal-arduino`](https://github.com/remocons/iosignal-arduino) GitHub 저장소를 참조하십시오.
 
-## iosignal 스택
-![IOSignal](./img/iosignal_architecture.png)

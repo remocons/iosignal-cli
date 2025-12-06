@@ -161,15 +161,18 @@ io.on('@pong', (...data) => {
 })
 
 io.on('ready', () => {
+  let date = new Date().toLocaleTimeString();
   wsConsole.print(
     Console.Types.Control,
-    `ready:  cid: ${io.cid}`,
+    `ready:  cid: ${io.cid} ${date}`,
     Console.Colors.Green)
 })
 
 io.on('close', () => {
   let date = new Date().toLocaleTimeString()
-  wsConsole.print(Console.Types.Control, `closed ${date}`, Console.Colors.Yellow)
+  wsConsole.print(Console.Types.Control, 
+    `closed ${date}`, 
+    Console.Colors.Yellow)
 })
 
 
@@ -217,12 +220,13 @@ io.on('iam_res', (...args) => {
 
 io.on('message',(tag,...args)=>{
   let msg ;
+  console.log( typeof args[0] )
   if(typeof args[0] == 'object'){
     msg = JSON.stringify( args[0])
   }else{
     msg = args;
   }
-  wsConsole.print(Console.Types.Incoming, `message: ${tag} ${msg}`, Console.Colors.Green)
+  wsConsole.print(Console.Types.Incoming, `-message: ${tag} ${msg}`, Console.Colors.Green)
 })
 
 wsConsole.on('line', (data) => {
