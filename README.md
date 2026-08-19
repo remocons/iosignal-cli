@@ -1,10 +1,3 @@
-# ⚠️ REPOSITORY ARCHIVED: Integrated into Monorepo
+# IOSignal CLI
 
-## This repository is no longer in use.
-
-The **iosignal-cli** tool has been successfully migrated and consolidated into our main **Monorepo**.
-
-| Detail | Old Repository (Archived) | **New Monorepo Location** |
-| :--- | :--- | :--- |
-| **Source Code** | `https://github.com/remocons/iosignal-cli` | **`https://github.com/remocons/iosignal`** (Root) |
-| **Package Path** | (Root) | **`https://github.com/remocons/iosignal/tree/main/packages/iosignal-cli`** |
+iosignal-cli 프로그램은 IOSignal 서버 및 클라이언트 실행용 CLI 프로그램입니다.
