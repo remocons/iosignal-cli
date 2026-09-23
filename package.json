@@ -4,13 +4,13 @@
   "description": "IOSignal server and client CLI program.",
   "type": "module",
   "bin": {
-    "iosignal-cli": "./bin/io-client.js",
-    "io-server": "./bin/io-server.js",
-    "io-client": "./bin/io-client.js",
-    "ios": "./bin/io-server.js",
-    "io": "./bin/io-client.js",
-    "ioip": "./bin/ioip.js",
-    "io-keygen": "./bin/io-keygen.js"
+    "iosignal-cli": "bin/io-client.js",
+    "io-server": "bin/io-server.js",
+    "io-client": "bin/io-client.js",
+    "ios": "bin/io-server.js",
+    "io": "bin/io-client.js",
+    "ioip": "bin/ioip.js",
+    "io-keygen": "bin/io-keygen.js"
   },
   "author": {
     "name": "Taeo Lee",
