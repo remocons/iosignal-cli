@@ -108,8 +108,7 @@ const defaultWebSocketPort = 7777;
 console.log(options)
 
 if (!options.connect) {
-  // options.connect = 'localhost:' + defaultWebSocketPort;
-  options.connect = 'wss://io.remocon.kr/ws'
+  options.connect = 'localhost:' + defaultWebSocketPort;
 }
 
 
