@@ -3,7 +3,9 @@
 import { EventEmitter } from 'events'
 import readline from 'readline'
 import tty from 'tty'
+import { binarySize, formatPayload } from '../lib/cli.js'
 import { program } from 'commander'
+import { clientHelp, interactiveHelp } from '../lib/help.js'
 
 import { IO, IOCongSocket, ENC_MODE, version as iosignal_version } from 'iosignal'
 import pkg from '../package.json' with { type: 'json' };
@@ -93,19 +95,21 @@ function noop() { }
 
 program
   .version(version)
-  .usage('[options] (--connect <url> )')
-  .option('-t, --timeout <milliseconds>', 'ping period & timeout')
-  .option('-c, --connect <url>', 'connect to a server')
-  .option('-i, --id <id>', 'userId')
-  .option('-k, --key <key>', 'userKey')
-  .option('-a, --auth-idKey <idkey>', 'auth id.key')
-  .option('-j, --join-channel <channelName>', 'join to channel')
+  .description('Interactive IOSignal client over WebSocket or CongSocket (TCP).')
+  .usage('[options]')
+  .option('-c, --connect <url>', 'server URL: ws://, wss:// or cong:// (default: ws://localhost:7777); bare host:port uses ws://')
+  .option('-i, --id <id>', 'authentication ID (use with --key)')
+  .option('-k, --key <key>', 'authentication key (use with --id)')
+  .option('-a, --auth-idKey <idkey>', 'combined authentication credentials: id.key')
+  .option('-j, --join-channel <tags>', 'subscribe on connection; comma-separated tags')
+  .addHelpText('after', clientHelp)
+  .showHelpAfterError('Use --help for startup options and interactive commands.')
   .parse(process.argv)
 
 const options = program.opts()
 const defaultWebSocketPort = 7777;
 
-console.log(options)
+
 
 if (!options.connect) {
   options.connect = 'localhost:' + defaultWebSocketPort;
@@ -138,7 +142,7 @@ if (options.id && options.key) {
 
 
 io.listen('@', (tag, ...args) => {
-  console.log('CID Message: ', tag, args)
+  if (wsConsole.showIncommingMessage) wsConsole.print(Console.Types.Incoming, `CID Message: ${tag} ${formatPayload(args)}`, Console.Colors.Green)
 })
 
 
@@ -169,8 +173,8 @@ io.on('ready', () => {
 
 io.on('close', () => {
   let date = new Date().toLocaleTimeString()
-  wsConsole.print(Console.Types.Control, 
-    `closed ${date}`, 
+  wsConsole.print(Console.Types.Control,
+    `closed ${date}`,
     Console.Colors.Yellow)
 })
 
@@ -218,198 +222,194 @@ io.on('iam_res', (...args) => {
 })
 
 io.on('message',(tag,...args)=>{
-  let msg ;
-  console.log( typeof args[0] )
-  if(typeof args[0] == 'object'){
-    msg = JSON.stringify( args[0])
-  }else{
-    msg = args;
-  }
-  wsConsole.print(Console.Types.Incoming, `-message: ${tag} ${msg}`, Console.Colors.Green)
+  if (wsConsole.showIncommingMessage) wsConsole.print(Console.Types.Incoming, `-message: ${tag} ${formatPayload(args)}`, Console.Colors.Green)
 })
 
 wsConsole.on('line', (data) => {
-  if (data[0] === '.') {
-    const toks = data.split(/\s+/)
-    const cmd = toks[0].substring(1)
-    let ch = ""
-    switch (cmd) {
-      case 'login':
-        toks.shift()
-        io.login(...toks)
-        break;
-      case 'auth':
-        toks.shift()
-        io.auth(...toks)
-        break;
+  try {
+    if (data[0] === '.') {
+      const toks = data.split(/\s+/)
+      const cmd = toks[0].substring(1)
+      let ch = ""
+      switch (cmd) {
+        case 'help':
+          wsConsole.stdout.write(interactiveHelp + '\n')
+          break;
+        case 'login':
+          toks.shift()
+          io.login(...toks)
+          break;
+        case 'auth':
+          toks.shift()
+          io.auth(...toks)
+          break;
 
-      case 'encNo':
-        io.encMode = ENC_MODE.NO
-        wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
-        break;
-      case 'encYes':
-        io.encMode = ENC_MODE.YES
-        wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
-        break;
-      case 'encAuto':
-        io.encMode = ENC_MODE.AUTO
-        wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
-        break;
-      case 'encMode':
-        wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
-        break;
+        case 'encNo':
+          io.encMode = ENC_MODE.NO
+          wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
+          break;
+        case 'encYes':
+          io.encMode = ENC_MODE.YES
+          wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
+          break;
+        case 'encAuto':
+          io.encMode = ENC_MODE.AUTO
+          wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
+          break;
+        case 'encMode':
+          wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
+          break;
 
-      case 'echo':
-        io.echo(toks[1])
-        break;
+        case 'echo':
+          io.echo(toks[1])
+          break;
 
-      case 'iam':
-        io.iam(toks[1])
-        break;
+        case 'iam':
+          io.iam(toks[1])
+          break;
 
-      case 'id':
-        console.log(`state: ${io.stateName} cid: ${io.cid} level: ${io.level}`)
-        break;
+        case 'id':
+          console.log(`state: ${io.stateName} cid: ${io.cid} level: ${io.level}`)
+          break;
 
-      case 'sudo':
-        toks.shift()
-        console.log('sudo toks', toks)
-        io.call('sudo', ...toks).then(res => {
-          if (res.ok) {
-            console.log('>> sudo response:', res.body)
-          } else {
-            console.log('>> sudo response:', res.body)
+        case 'sudo':
+          toks.shift()
+          io.call('sudo', ...toks).then(res => {
+            if (res.ok) {
+              console.log('>> sudo response:', res.body)
+            } else {
+              console.log('>> sudo response:', res.body)
+            }
+          }).catch(err => {
+            console.log('sudo call err', err)
+          })
+
+          break;
+
+
+        case 'quota':
+          console.log(`quota: ${JSON.stringify(io.quota)}`)
+          break;
+
+        case 'ch':
+          let chList = []
+          io.channels.forEach(v => {
+            chList.push(v)
+          })
+          console.log(`channels: ${chList.toString()}`)
+          break;
+
+        case 'sig':
+        case 'signal':
+          toks.shift()
+          io.signal(...toks)
+          break;
+
+        case 'sig_bin':
+          toks.shift()
+          let to = toks[0]
+          if (!to) throw new Error('usage: .sig_bin <tag> <size>')
+          let size = binarySize(toks[1])
+          console.log(`signal tag: ${to} size: ${size}`)
+          io.signal(to, new Uint8Array(size))
+          break;
+
+        case 'pub':
+        case 'publish':
+          toks.shift()
+          io.publish(...toks)
+          break;
+
+        case 'call':
+          toks.shift()
+          if (toks.length < 2) {
+            wsConsole.print(
+              Console.Types.Error,
+              '[.call need at least two params]  call target command [, ..args]',
+              Console.Colors.Yellow
+            )
+            return
           }
-        }).catch(err => {
-          console.log('sudo call err', err)
-        })
+          io.call(...toks).then(result => {
+            console.log('>> response:', result)
+          }).catch(e => {
+            console.log(e)
+          })
+          break;
 
-        break;
+        case 'join':
+        case 'sub':
+        case 'subscribe':
+        case 'listen':
+          toks.shift()
+          let tag = toks[0]
+          if(tag){
+            io.subscribe( tag )
+            let tagList = tag.split(',')
+            tagList.forEach( (v)=>{
+              io.channels.add( v )
+            })
+          }
+          break;
 
 
-      case 'quota':
-        console.log(`quota: ${JSON.stringify(io.quota)}`)
-        break;
+        case 'unsub':
+          io.unsubscribe(toks[1]);
+          break;
 
-      case 'ch':
-        let chList = []
-        io.channels.forEach(v => {
-          chList.push(v)
-        })
-        console.log(`channels: ${chList.toString()}`)
-        break;
+        case 'pping':
+          io.signal(toks[1] + "@ping", io.cid)
+          break;
+        case 'ping':
+          io.ping()
+          break;
 
-      case 'sig':
-      case 'signal':
-        toks.shift()
-        io.signal(...toks)
-        break;
+        case 'pong':
+          io.pong()
+          break
 
-      case 'sig_bin':
-        toks.shift()
-        let to = toks[0]
-        let size = parseInt(toks[1])
-        console.log(`signal tag: ${to} size: ${size}`)
-        io.signal(to, new Uint8Array(size))
-        break;
+        case 'close':
+          io.close()
+          break
 
-      case 'pub':
-      case 'publish':
-        toks.shift()
-        io.publish(...toks)
-        break;
-
-      case 'set':
-        io.set(toks[1])
-        break;
-
-      case 'call':
-        toks.shift()
-        if (toks.length < 2) {
+        case 'open':
+        case 'connect':
+          if (toks[1]) {
+            let url = toks[1]
+            if (!url.match(/\w+:\/\/.*$/i)) {
+              url = `ws://${url}`
+            }
+            io.open(url) // new url
+          } else {
+            io.open()  // last url
+          }
+          break
+        case 'show':
+          wsConsole.showIncommingMessage = true
+          break;
+        case 'hide':
+          wsConsole.showIncommingMessage = false
+          break;
+        case 'quit':
+        case 'exit':
+          process.exit();
+        default:
           wsConsole.print(
             Console.Types.Error,
-            '[.call need at least two params]  call target command [, ..args]',
+            'Unknown command. Type .help for commands and examples.',
             Console.Colors.Yellow
           )
-          return
-        }
-        io.call(...toks).then(result => {
-          console.log('>> response:', result)
-        }).catch(e => {
-          console.log(e)
-        })
-        break;
-
-      case 'join':
-      case 'sub':
-      case 'subscribe':
-      case 'listen':
-        toks.shift()
-        let tag = toks[0]
-        if(tag){
-          io.subscribe( tag )
-          let tagList = tag.split(',')
-          tagList.forEach( (v)=>{ 
-            io.channels.add( v )
-          })
-        }
-        break;
-
-
-      case 'unsub':
-        io.unsubscribe(toks[1]);
-        break;
-
-      case 'pping':
-        io.signal(toks[1] + "@ping", io.cid)
-        break;
-      case 'ping':
-        io.ping()
-        break;
-
-      case 'pong':
-        io.pong()
-        break
-
-      case 'close':
-        io.close()
-        break
-
-      case 'open':
-      case 'connect':
-        if (toks[1]) {
-          let url = toks[1]
-          if (!url.match(/\w+:\/\/.*$/i)) {
-            url = `ws://${url}`
-          }
-          io.open(url) // new url
-        } else {
-          io.open()  // last url
-        }
-        break
-      case 'show':
-        wsConsole.showIncommingMessage = true
-        break;
-      case 'hide':
-        wsConsole.showIncommingMessage = false
-        break;
-      case 'quit':
-      case 'exit':
-        process.exit();
-      default:
-        wsConsole.print(
-          Console.Types.Error,
-          'command list: .signal .sig .listen .publish .pub .subscribe .sub .unsub .ping .pong .id .iam .open .connect .close .login .auth .quit .exit',
-          Console.Colors.Yellow
-        )
+      }
+    } else {
+      // io.send( data )
+          wsConsole.print(
+            Console.Types.Error,
+            'Unknown command. Type .help for commands and examples.',
+            Console.Colors.Yellow
+          )
     }
-  } else {
-    // io.send( data )
-        wsConsole.print(
-          Console.Types.Error,
-          'command list: .signal .sig .listen .publish .pub .subscribe .sub .unsub .ping .pong .id .iam .open .connect .close .login .auth .quit .exit',
-          Console.Colors.Yellow
-        )
+  } catch (error) {
+    wsConsole.print(Console.Types.Error, error.message, Console.Colors.Red)
   }
   wsConsole.prompt()
 })
