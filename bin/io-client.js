@@ -229,186 +229,184 @@ io.on('message',(tag,...args)=>{
 
 wsConsole.on('line', (data) => {
   try {
-    if (data[0] === '.') {
-      const toks = data.split(/\s+/)
-      const cmd = toks[0].substring(1)
-      let ch = ""
-      switch (cmd) {
-        case 'help':
-          wsConsole.stdout.write(interactiveHelp + '\n')
-          break;
-        case 'login':
-          toks.shift()
-          io.login(...toks)
-          break;
-        case 'auth':
-          toks.shift()
-          io.auth(...toks)
-          break;
+    const line = data.trim()
+    if (!line) {
+      wsConsole.prompt()
+      return
+    }
+    if (line.startsWith('.')) {
+      throw new Error('Command prefixes have been removed. Type commands without the leading dot (e.g. help, sub, pub).')
+    }
+    const toks = line.split(/\s+/)
+    const cmd = toks[0]
+    switch (cmd) {
+      case 'help':
+        wsConsole.stdout.write(interactiveHelp + '\n')
+        break;
+      case 'login':
+        toks.shift()
+        io.login(...toks)
+        break;
+      case 'auth':
+        toks.shift()
+        io.auth(...toks)
+        break;
 
-        case 'encNo':
-          io.encMode = ENC_MODE.NO
-          wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
-          break;
-        case 'encYes':
-          io.encMode = ENC_MODE.YES
-          wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
-          break;
-        case 'encAuto':
-          io.encMode = ENC_MODE.AUTO
-          wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
-          break;
-        case 'encMode':
-          wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
-          break;
+      case 'encNo':
+        io.encMode = ENC_MODE.NO
+        wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
+        break;
+      case 'encYes':
+        io.encMode = ENC_MODE.YES
+        wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
+        break;
+      case 'encAuto':
+        io.encMode = ENC_MODE.AUTO
+        wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
+        break;
+      case 'encMode':
+        wsConsole.print(Console.Types.Incoming, `encMode: ${ENC_MODE[io.encMode]}`, Console.Colors.Green)
+        break;
 
-        case 'echo':
-          io.echo(toks[1])
-          break;
+      case 'echo':
+        io.echo(toks[1])
+        break;
 
-        case 'iam':
-          io.iam(toks[1])
-          break;
+      case 'iam':
+        io.iam(toks[1])
+        break;
 
-        case 'id':
-          console.log(`state: ${io.stateName} cid: ${io.cid} level: ${io.level}`)
-          break;
+      case 'id':
+        console.log(`state: ${io.stateName} cid: ${io.cid} level: ${io.level}`)
+        break;
 
-        case 'sudo':
-          toks.shift()
-          io.call('sudo', ...toks).then(res => {
-            if (res.ok) {
-              console.log('>> sudo response:', res.body)
-            } else {
-              console.log('>> sudo response:', res.body)
-            }
-          }).catch(err => {
-            console.log('sudo call err', err)
-          })
-
-          break;
-
-
-        case 'quota':
-          console.log(`quota: ${JSON.stringify(io.quota)}`)
-          break;
-
-        case 'ch':
-          let chList = []
-          io.channels.forEach(v => {
-            chList.push(v)
-          })
-          console.log(`channels: ${chList.toString()}`)
-          break;
-
-        case 'sig':
-        case 'signal':
-          toks.shift()
-          io.signal(...toks)
-          break;
-
-        case 'sig_bin':
-          toks.shift()
-          let to = toks[0]
-          if (!to) throw new Error('usage: .sig_bin <tag> <size>')
-          let size = binarySize(toks[1])
-          console.log(`signal tag: ${to} size: ${size}`)
-          io.signal(to, new Uint8Array(size))
-          break;
-
-        case 'pub':
-        case 'publish':
-          toks.shift()
-          io.publish(...toks)
-          break;
-
-        case 'call':
-          toks.shift()
-          if (toks.length < 2) {
-            wsConsole.print(
-              Console.Types.Error,
-              '[.call need at least two params]  call target command [, ..args]',
-              Console.Colors.Yellow
-            )
-            return
-          }
-          io.call(...toks).then(result => {
-            console.log('>> response:', result)
-          }).catch(e => {
-            console.log(e)
-          })
-          break;
-
-        case 'join':
-        case 'sub':
-        case 'subscribe':
-        case 'listen':
-          toks.shift()
-          let tag = toks[0]
-          if(tag){
-            io.subscribe( tag )
-            let tagList = tag.split(',')
-            tagList.forEach( (v)=>{
-              io.channels.add( v )
-            })
-          }
-          break;
-
-
-        case 'unsub':
-          io.unsubscribe(toks[1]);
-          break;
-
-        case 'pping':
-          io.signal(toks[1] + "@ping", io.cid)
-          break;
-        case 'ping':
-          io.ping()
-          break;
-
-        case 'pong':
-          io.pong()
-          break
-
-        case 'close':
-          io.close()
-          break
-
-        case 'open':
-        case 'connect':
-          if (toks[1]) {
-            let url = toks[1]
-            if (!url.match(/\w+:\/\/.*$/i)) {
-              url = `ws://${url}`
-            }
-            io.open(url) // new url
+      case 'sudo':
+        toks.shift()
+        io.call('sudo', ...toks).then(res => {
+          if (res.ok) {
+            console.log('>> sudo response:', res.body)
           } else {
-            io.open()  // last url
+            console.log('>> sudo response:', res.body)
           }
-          break
-        case 'show':
-          wsConsole.showIncommingMessage = true
-          break;
-        case 'hide':
-          wsConsole.showIncommingMessage = false
-          break;
-        case 'quit':
-        case 'exit':
-          process.exit();
-        default:
+        }).catch(err => {
+          console.log('sudo call err', err)
+        })
+
+        break;
+
+
+      case 'quota':
+        console.log(`quota: ${JSON.stringify(io.quota)}`)
+        break;
+
+      case 'ch':
+        let chList = []
+        io.channels.forEach(v => {
+          chList.push(v)
+        })
+        console.log(`channels: ${chList.toString()}`)
+        break;
+
+      case 'sig':
+      case 'signal':
+        toks.shift()
+        io.signal(...toks)
+        break;
+
+      case 'sig_bin':
+        toks.shift()
+        let to = toks[0]
+        if (!to) throw new Error('usage: sig_bin <tag> <size>')
+        let size = binarySize(toks[1])
+        console.log(`signal tag: ${to} size: ${size}`)
+        io.signal(to, new Uint8Array(size))
+        break;
+
+      case 'pub':
+      case 'publish':
+        toks.shift()
+        io.publish(...toks)
+        break;
+
+      case 'call':
+        toks.shift()
+        if (toks.length < 2) {
           wsConsole.print(
             Console.Types.Error,
-            'Unknown command. Type .help for commands and examples.',
+            '[call need at least two params]  call target command [, ..args]',
             Console.Colors.Yellow
           )
-      }
-    } else {
-      // io.send( data )
-          wsConsole.print(
-            Console.Types.Error,
-            'Unknown command. Type .help for commands and examples.',
-            Console.Colors.Yellow
-          )
+          return
+        }
+        io.call(...toks).then(result => {
+          console.log('>> response:', result)
+        }).catch(e => {
+          console.log(e)
+        })
+        break;
+
+      case 'join':
+      case 'sub':
+      case 'subscribe':
+      case 'listen':
+        toks.shift()
+        let tag = toks[0]
+        if(tag){
+          io.subscribe( tag )
+          let tagList = tag.split(',')
+          tagList.forEach( (v)=>{
+            io.channels.add( v )
+          })
+        }
+        break;
+
+
+      case 'unsub':
+        io.unsubscribe(toks[1]);
+        break;
+
+      case 'pping':
+        io.signal(toks[1] + "@ping", io.cid)
+        break;
+      case 'ping':
+        io.ping()
+        break;
+
+      case 'pong':
+        io.pong()
+        break
+
+      case 'close':
+        io.close()
+        break
+
+      case 'open':
+      case 'connect':
+        if (toks[1]) {
+          let url = toks[1]
+          if (!url.match(/\w+:\/\/.*$/i)) {
+            url = `ws://${url}`
+          }
+          io.open(url) // new url
+        } else {
+          io.open()  // last url
+        }
+        break
+      case 'show':
+        wsConsole.showIncommingMessage = true
+        break;
+      case 'hide':
+        wsConsole.showIncommingMessage = false
+        break;
+      case 'quit':
+      case 'exit':
+        process.exit();
+      default:
+        wsConsole.print(
+          Console.Types.Error,
+          'Unknown command. Type help for commands and examples.',
+          Console.Colors.Yellow
+        )
     }
   } catch (error) {
     wsConsole.print(Console.Types.Error, error.message, Console.Colors.Red)
