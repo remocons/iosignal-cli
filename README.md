@@ -26,6 +26,7 @@ io-server -l 7777                     # WebSocket 서버
 io-server -L 8888                     # CongSocket(TCP) 서버
 io-server -l 7777 -L 8888              # 두 전송 방식 함께 사용
 io-client                            # ws://localhost:7777 연결
+io-client -c                         # 공식 서버 wss://io.iosignal.net/ws 연결
 io-client -c ws://localhost:7777
 io-client -c cong://localhost:8888
 ```
@@ -35,7 +36,9 @@ io-client -c cong://localhost:8888
 포트는 0~65535 정수이며, 0은 운영체제가 포트를 선택하도록 합니다.
 
 서버의 `--timeout`은 heartbeat 및 연결 확인 주기입니다. 밀리초 단위이며 1000~2147483647 범위를 받습니다(기본 50000).
-서버는 `-l`, `-L` 중 하나 이상을 지정해야 합니다. 클라이언트는 접속 주소를 생략하면 `ws://localhost:7777`을 사용합니다.
+서버는 `-l`, `-L` 중 하나 이상을 지정해야 합니다. 클라이언트는 `-c` 옵션을 생략하면 `ws://localhost:7777`을 사용합니다.
+`-c` 또는 `--connect`만 지정하고 주소를 생략하면 공식 서버 `wss://io.iosignal.net/ws`에 접속합니다.
+`io-client -c -j demo`처럼 다른 옵션과 함께 사용할 수도 있습니다.
 
 ## 도움말과 서버 출력 옵션
 

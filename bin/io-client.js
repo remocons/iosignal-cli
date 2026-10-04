@@ -97,7 +97,7 @@ program
   .version(version)
   .description('Interactive IOSignal client over WebSocket or CongSocket (TCP).')
   .usage('[options]')
-  .option('-c, --connect <url>', 'server URL: ws://, wss:// or cong:// (default: ws://localhost:7777); bare host:port uses ws://')
+  .option('-c, --connect [url]', 'server URL: ws://, wss:// or cong://; -c alone: wss://io.iosignal.net/ws; omitted: ws://localhost:7777; bare host:port uses ws://')
   .option('-i, --id <id>', 'authentication ID (use with --key)')
   .option('-k, --key <key>', 'authentication key (use with --id)')
   .option('-a, --auth-idKey <idkey>', 'combined authentication credentials: id.key')
@@ -111,7 +111,9 @@ const defaultWebSocketPort = 7777;
 
 
 
-if (!options.connect) {
+if (options.connect === true) {
+  options.connect = 'wss://io.iosignal.net/ws';
+} else if (!options.connect) {
   options.connect = 'localhost:' + defaultWebSocketPort;
 }
 
@@ -413,7 +415,6 @@ wsConsole.on('line', (data) => {
   }
   wsConsole.prompt()
 })
-
 
 
 
