@@ -1,5 +1,7 @@
 # IOSignal CLI
 
+현재 npm 패키지 버전은 **7.1.0**이며 IOSignal 버전과 맞췄습니다. 서버·peer ping 처리와 CLI 로그 개선을 포함합니다.
+
 iosignal-cli는 IOSignal 서버와 대화형 클라이언트를 실행하는 CLI입니다.
 
 ## 설치
