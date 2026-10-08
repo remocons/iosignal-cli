@@ -130,3 +130,19 @@ test('Redis examples, authentication and graceful shutdown', { timeout: 20000, s
   assert.equal(await failed.done, 1, failed.output)
   assert.doesNotMatch(failed.output, /Serving/)
 })
+
+
+test('CLI ping CID and pping alias receive peer pong while both peers hide ordinary input', {timeout:10000},async t=>{
+ const server=launch(['bin/io-server.js','-l','0']);t.after(()=>stop(server));
+ await until(()=>/ws:\/\/localhost:\d+/.test(server.output),server);
+ const url=server.output.match(/ws:\/\/localhost:\d+/)[0];
+ const peer=new IO(url);t.after(()=>peer.destroy());await until(()=>peer.stateName==='ready');
+ peer.on('@',(tag,from)=>{if(tag==='@ping')peer.signal(`${from}@pong`,peer.cid);});
+ const cli=launch(['bin/io-client.js','-c',url,'-j','ready-check']);t.after(()=>stop(cli));
+ // Echo an ordinary message back from the CLI to confirm it is connected.
+ const timer=setInterval(()=>peer.publish('ready-check','ready-marker'),40);t.after(()=>clearInterval(timer));
+ await until(()=>cli.output.includes('ready-marker'),cli);clearInterval(timer);
+ cli.stdin.write(`hide\nping ${peer.cid}\n`);await until(()=>cli.output.includes(`pong (${peer.cid})`),cli);
+ cli.stdin.write(`pping ${peer.cid}\n`);await until(()=>cli.output.split(`pong (${peer.cid})`).length===3,cli);
+ cli.stdin.write('exit\n');assert.equal(await cli.done,0,cli.output);
+});

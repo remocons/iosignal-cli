@@ -125,7 +125,7 @@ SDK의 `io.listen(tag, handler)`처럼 사용자 핸들러를 등록하는 명�
 | `auth <id> <key>` / `login <id> <key>` | 자동 로그인용 인증 설정 / 서버 인증 challenge를 이용한 로그인 시도; 단일 `id.key` 인자도 가능 |
 | `hide` / `show` | 수신 message 및 CID 메시지 숨김 / 표시; 제어·상태 메시지는 유지 |
 | `id` / `ch` / `quota` | 현재 연결, 구독, quota 조회 |
-| `ping` / `pong` / `pping <cid>` | 서버 ping·pong / 상대 CID로 ping |
+| `ping [cid]` / `pong` / `pping <cid>` | 인자 없이 서버 ping · CID 지정 시 peer ping · pping은 별칭 |
 | `echo [text]` / `iam [name]` | echo 요청 / 별명 조회·설정; text와 name은 한 토큰 |
 | `encNo` / `encYes` / `encAuto` / `encMode` | 암호화 모드 변경 / 조회 |
 | `close` / `open [url]` / `connect [url]` | 연결 닫기 / 재연결; `close` 후 자동 재접속할 수 있음 |
@@ -173,3 +173,17 @@ node test_auth_redis/server-auth-redis.js
 ```sh
 IOSIGNAL_TEST_REDIS_SERVER=redis-server npm test
 ```
+
+Server ping replies print `pong`; peer replies print `pong (<cid>)`. Peer requests use a direct `@ping` signal with one TEXT argument containing the sender CID. A responder sends `@pong` back with its own CID. CLI clients respond automatically, including while incoming messages are hidden. Unanswered requests time out after 3 seconds; disconnecting cancels pending requests.
+
+## 대화형 로그 표시
+
+대화형 프롬프트는 CID 대신 `›`를 사용합니다. 응답은 들여쓰고 수신 메시지,
+연결 상태, 오류를 구분합니다. 시간은 기본적으로 숨기며 `--timestamps`로 표시합니다.
+`NO_COLOR=1`로 색상을 끌 수 있습니다. 파이프 출력에는 장식이나 시간이 추가되지 않습니다.
+
+`ping`은 서버에, `ping <cid>`는 상대 장치에 요청합니다. `pping <cid>`는 별칭입니다.
+응답은 `pong` 또는 `pong (<cid>)`이며 3초 후 응답이 없으면 timeout을 표시합니다.
+CLI는 수신한 peer ping에 자동 응답하며 `hide` 설정에도 응답합니다.
+Node CLI는 기존 서버의 WebSocket 제어 PONG과 IOSignal PONG 패킷을 모두 처리합니다.
+브라우저 CLI의 기본 ping에는 서버의 IOSignal PONG 패킷 응답이 필요합니다.

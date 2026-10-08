@@ -3,6 +3,9 @@
 import { EventEmitter } from 'events'
 import readline from 'readline'
 import tty from 'tty'
+import { format } from 'node:util'
+import { formatLog } from '../lib/log.js'
+import { createPingSession } from '../lib/peer-ping.js'
 import { binarySize, formatPayload } from '../lib/cli.js'
 import { program } from 'commander'
 import { clientHelp, interactiveHelp } from '../lib/help.js'
@@ -23,6 +26,7 @@ class Console extends EventEmitter {
     this.stderr = process.stderr
 
     this.readlineInterface = readline.createInterface(this.stdin, this.stdout)
+    this.readlineInterface.setPrompt(this.stdout.isTTY && !process.env.NO_COLOR ? '\x1b[38;5;109m›\x1b[39m ' : '› ')
 
     this.readlineInterface
       .on('line', (data) => {
@@ -60,10 +64,11 @@ class Console extends EventEmitter {
     this.readlineInterface.prompt(true)
   }
 
-  print(type, msg, color) {
+  print(type, msg, color, kind = type === Console.Types.Error ? 'error' : type === Console.Types.Control ? 'status' : 'reply') {
     if (tty.isatty(1)) {
       this.clear()
-      this.stdout.write(color + type + msg + Console.Colors.Default + '\n')
+      const display = kind === 'incoming' ? msg.replace(/^CID Message: /, '직접 ').replace(/^-message: /, '채널 ') : msg
+      this.stdout.write(formatLog(display, { kind, timestamps: this.timestamps, color: !process.env.NO_COLOR }) + '\n')
       this.prompt()
     } else if (type === Console.Types.Incoming) {
       this.stdout.write(msg + '\n')
@@ -74,6 +79,12 @@ class Console extends EventEmitter {
     } else {
       // is a control message and we're not in a tty... drop it.
     }
+  }
+
+  reply(...args) {
+    const msg = format(...args)
+    if (tty.isatty(1)) this.print(Console.Types.Incoming, msg, Console.Colors.Default)
+    else this.stdout.write(msg + '\n')
   }
 
   clear() {
@@ -101,6 +112,7 @@ program
   .option('-i, --id <id>', 'authentication ID (use with --key)')
   .option('-k, --key <key>', 'authentication key (use with --id)')
   .option('-a, --auth-idKey <idkey>', 'combined authentication credentials: id.key')
+  .option('--timestamps', 'show timestamps in interactive logs')
   .option('-j, --join-channel <tags>', 'subscribe on connection; comma-separated tags')
   .addHelpText('after', clientHelp)
   .showHelpAfterError('Use --help for startup options and interactive commands.')
@@ -119,6 +131,7 @@ if (options.connect === true) {
 
 
 const wsConsole = new Console()
+wsConsole.timestamps = options.timestamps || false
 
 let connectUrl = options.connect
 // console.log('connectUrl raw', connectUrl )
@@ -144,7 +157,7 @@ if (options.id && options.key) {
 
 
 io.listen('@', (tag, ...args) => {
-  if (wsConsole.showIncommingMessage) wsConsole.print(Console.Types.Incoming, `CID Message: ${tag} ${formatPayload(args)}`, Console.Colors.Green)
+  if (wsConsole.showIncommingMessage && !['@ping', '@pong'].includes(tag)) wsConsole.print(Console.Types.Incoming, `CID Message: ${tag} ${formatPayload(args)}`, Console.Colors.Green, 'incoming')
 })
 
 
@@ -156,27 +169,24 @@ if (options.joinChannel) {
 }
 
 
-wsConsole.print(Console.Types.Control, `Connecting to ${connectUrl}`, Console.Colors.Yellow)
+wsConsole.print(Console.Types.Control, `[연결] 접속 중 · ${connectUrl}`, Console.Colors.Yellow)
 
-io.on('@pong', (...data) => {
-  wsConsole.print(
-    Console.Types.Control,
-    `>> receive pong from ${data[0]}`,
-    Console.Colors.Yellow)
+const peerPings = createPingSession(io, {
+  onPong: cid => wsConsole.print(Console.Types.Incoming, cid ? `pong (${cid})` : 'pong', Console.Colors.Yellow),
+  onTimeout: cid => wsConsole.print(Console.Types.Error, `ping timeout${cid ? ` (${cid})` : ''}`, Console.Colors.Red)
 })
+process.once('exit', () => peerPings.dispose())
 
 io.on('ready', () => {
-  let date = new Date().toLocaleTimeString();
   wsConsole.print(
     Console.Types.Control,
-    `ready:  cid: ${io.cid} ${date}`,
+    '[연결] 접속 완료',
     Console.Colors.Green)
 })
 
 io.on('close', () => {
-  let date = new Date().toLocaleTimeString()
   wsConsole.print(Console.Types.Control,
-    `closed ${date}`,
+    '[연결] 연결이 닫혔습니다.',
     Console.Colors.Yellow)
 })
 
@@ -184,21 +194,21 @@ io.on('close', () => {
 io.on('authorized', () => {
   wsConsole.print(
     Console.Types.Control,
-    `Boho authorized. TLS: ${io.TLS}`,
+    `[인증] 완료 · TLS: ${io.TLS}`,
     Console.Colors.Yellow)
 })
 
 io.on('auth_fail', () => {
   wsConsole.print(
     Console.Types.Control,
-    `Boho auth_fail.`,
+    '[인증] 인증에 실패했습니다.',
     Console.Colors.Yellow)
 })
 
 io.on('auth_clear', () => {
   wsConsole.print(
     Console.Types.Control,
-    `Boho auth_clear.`,
+    '[인증] 인증이 해제되었습니다.',
     Console.Colors.Yellow)
 })
 
@@ -213,7 +223,7 @@ io.on('echo', (...args) => {
     wsConsole.print(
     Console.Types.Control,
     `ECHO ${args}`,
-    Console.Colors.Yellow)
+    Console.Colors.Yellow, 'reply')
 })
 io.on('iam_res', (...args) => {
   // console.log('log: ', args)
@@ -224,7 +234,7 @@ io.on('iam_res', (...args) => {
 })
 
 io.on('message',(tag,...args)=>{
-  if (wsConsole.showIncommingMessage) wsConsole.print(Console.Types.Incoming, `-message: ${tag} ${formatPayload(args)}`, Console.Colors.Green)
+  if (wsConsole.showIncommingMessage) wsConsole.print(Console.Types.Incoming, `-message: ${tag} ${formatPayload(args)}`, Console.Colors.Green, 'incoming')
 })
 
 wsConsole.on('line', (data) => {
@@ -241,7 +251,7 @@ wsConsole.on('line', (data) => {
     const cmd = toks[0]
     switch (cmd) {
       case 'help':
-        wsConsole.stdout.write(interactiveHelp + '\n')
+        wsConsole.reply(interactiveHelp)
         break;
       case 'login':
         toks.shift()
@@ -277,26 +287,26 @@ wsConsole.on('line', (data) => {
         break;
 
       case 'id':
-        console.log(`state: ${io.stateName} cid: ${io.cid} level: ${io.level}`)
+        wsConsole.reply(`state: ${io.stateName} cid: ${io.cid} level: ${io.level}`)
         break;
 
       case 'sudo':
         toks.shift()
         io.call('sudo', ...toks).then(res => {
           if (res.ok) {
-            console.log('>> sudo response:', res.body)
+            wsConsole.reply('>> sudo response:', res.body)
           } else {
-            console.log('>> sudo response:', res.body)
+            wsConsole.reply('>> sudo response:', res.body)
           }
         }).catch(err => {
-          console.log('sudo call err', err)
+          wsConsole.print(Console.Types.Error, String(err), Console.Colors.Red)
         })
 
         break;
 
 
       case 'quota':
-        console.log(`quota: ${JSON.stringify(io.quota)}`)
+        wsConsole.reply(`quota: ${JSON.stringify(io.quota)}`)
         break;
 
       case 'ch':
@@ -304,7 +314,7 @@ wsConsole.on('line', (data) => {
         io.channels.forEach(v => {
           chList.push(v)
         })
-        console.log(`channels: ${chList.toString()}`)
+        wsConsole.reply(`channels: ${chList.toString()}`)
         break;
 
       case 'sig':
@@ -318,7 +328,7 @@ wsConsole.on('line', (data) => {
         let to = toks[0]
         if (!to) throw new Error('usage: sig_bin <tag> <size>')
         let size = binarySize(toks[1])
-        console.log(`signal tag: ${to} size: ${size}`)
+        wsConsole.reply(`signal tag: ${to} size: ${size}`)
         io.signal(to, new Uint8Array(size))
         break;
 
@@ -339,9 +349,9 @@ wsConsole.on('line', (data) => {
           return
         }
         io.call(...toks).then(result => {
-          console.log('>> response:', result)
+          wsConsole.reply('>> response:', result)
         }).catch(e => {
-          console.log(e)
+          wsConsole.print(Console.Types.Error, String(e), Console.Colors.Red)
         })
         break;
 
@@ -366,10 +376,10 @@ wsConsole.on('line', (data) => {
         break;
 
       case 'pping':
-        io.signal(toks[1] + "@ping", io.cid)
-        break;
+        if (!toks[1]) throw new Error('Usage: pping <cid>')
       case 'ping':
-        io.ping()
+        if (toks.length > 2) throw new Error('Usage: ping [cid]')
+        peerPings.ping(toks[1])
         break;
 
       case 'pong':
