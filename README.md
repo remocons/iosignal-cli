@@ -1,6 +1,8 @@
 # IOSignal CLI
 
-현재 npm 패키지 버전은 **7.1.0**이며 IOSignal 버전과 맞췄습니다. 서버·peer ping 처리와 CLI 로그 개선을 포함합니다.
+[한국어](README.md) | [English](README.en.md)
+
+CLI 패키지 버전은 **7.2.0**이며, 저장소는 IOSignal **7.2.0**을 사용합니다. 서버·peer ping 처리와 대화형 로그 개선을 포함합니다.
 
 iosignal-cli는 IOSignal 서버와 대화형 클라이언트를 실행하는 CLI입니다.
 
@@ -176,9 +178,7 @@ node test_auth_redis/server-auth-redis.js
 IOSIGNAL_TEST_REDIS_SERVER=redis-server npm test
 ```
 
-Server ping replies print `pong`; peer replies print `pong (<cid>)`. Peer requests use a direct `@ping` signal with one TEXT argument containing the sender CID. A responder sends `@pong` back with its own CID. CLI clients respond automatically, including while incoming messages are hidden. Unanswered requests time out after 3 seconds; disconnecting cancels pending requests.
-
-## 대화형 로그 표시
+## 대화형 로그와 ping
 
 대화형 프롬프트는 CID 대신 `›`를 사용합니다. 응답은 들여쓰고 수신 메시지,
 연결 상태, 오류를 구분합니다. 시간은 기본적으로 숨기며 `--timestamps`로 표시합니다.
@@ -186,6 +186,8 @@ Server ping replies print `pong`; peer replies print `pong (<cid>)`. Peer reques
 
 `ping`은 서버에, `ping <cid>`는 상대 장치에 요청합니다. `pping <cid>`는 별칭입니다.
 응답은 `pong` 또는 `pong (<cid>)`이며 3초 후 응답이 없으면 timeout을 표시합니다.
+연결이 끊기면 대기 중인 ping 요청을 취소합니다.
+Peer ping은 송신자 CID를 TEXT 인자 하나로 담은 직접 `@ping` 시그널을 사용합니다. 수신자는 자신의 CID를 담은 `@pong`으로 응답합니다.
 CLI는 수신한 peer ping에 자동 응답하며 `hide` 설정에도 응답합니다.
 Node CLI는 기존 서버의 WebSocket 제어 PONG과 IOSignal PONG 패킷을 모두 처리합니다.
 브라우저 CLI의 기본 ping에는 서버의 IOSignal PONG 패킷 응답이 필요합니다.
