@@ -6,6 +6,10 @@ CLI 패키지 버전은 **7.2.0**이며, 저장소는 IOSignal **7.2.0**을 사�
 
 iosignal-cli는 IOSignal 서버와 대화형 클라이언트를 실행하는 CLI입니다.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/docs/assets/iosignal-ecosystem.png" alt="IOSignal로 연결되는 서버, CLI, Node.js, Arduino와 원격 제어 웹앱" width="720" />
+</p>
+
 ## 설치
 
 Node.js 22.16.0 이상이 필요합니다.

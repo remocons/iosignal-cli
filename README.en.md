@@ -6,6 +6,10 @@ The CLI package version is **7.2.0**, and the repository uses IOSignal **7.2.0**
 
 iosignal-cli runs an IOSignal server or an interactive client.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/docs/assets/iosignal-ecosystem.png" alt="Server, CLI, Node.js, Arduino and remote web apps connected through IOSignal" width="720" />
+</p>
+
 ## Installation
 
 Requires Node.js 22.16.0 or later.
