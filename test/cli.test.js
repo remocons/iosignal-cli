@@ -21,6 +21,13 @@ test('invalid server options fail before listening', () => {
     assert.match(result.stderr, /integer/)
   }
 })
+test('local auth options cannot be combined and need a key', () => {
+  for (const args of [['-l','0','-i','-k','lab'], ['-l','0','-i','-e','a.b.c.3'], ['-l','0','-k','lab','-r'], ['-l','0','-k','']]) {
+    const result = run('io-server', args)
+    assert.equal(result.status, 1, result.stderr)
+    assert.match(result.stderr, /--id-key|--shared-key/)
+  }
+})
 test('client rejects unsupported timeout', () => {
   const result = run('io-client', ['--timeout','1000'])
   assert.equal(result.status, 1)

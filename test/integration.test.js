@@ -146,3 +146,52 @@ test('CLI ping CID and pping alias receive peer pong while both peers hide ordin
  cli.stdin.write(`pping ${peer.cid}\n`);await until(()=>cli.output.split(`pong (${peer.cid})`).length===3,cli);
  cli.stdin.write('exit\n');assert.equal(await cli.done,0,cli.output);
 });
+
+async function login(t, url, id, key) {
+  const io = new IO()
+  t.after(() => io.stop())
+  io.auth(id, key)
+  const result = new Promise(resolve => { io.once('ready', () => resolve('ready')); io.once('auth_fail', () => resolve('auth_fail')) })
+  io.open(url)
+  return [io, await result]
+}
+
+test('--id-key logs in any ID whose key equals the ID, with CID = ID', { timeout: 15000 }, async t => {
+  const server = launch(['bin/io-server.js', '-l', '0', '--id-key'])
+  t.after(() => stop(server))
+  await until(() => /ws:\/\/localhost:\d+/.test(server.output), server)
+  assert.match(server.output, /local test: key = ID/)
+  const url = server.output.match(/ws:\/\/localhost:\d+/)[0]
+  const [io, state] = await login(t, url, 'dev1', 'dev1')
+  assert.equal(state, 'ready')
+  assert.equal(io.cid, 'dev1')
+  assert.equal((await login(t, url, 'dev2', 'wrong'))[1], 'auth_fail')
+})
+
+test('--shared-key with --members-only logs in any ID and drops anonymous signals', { timeout: 15000 }, async t => {
+  const server = launch(['bin/io-server.js', '-l', '0', '-k', 'lab2026', '-M', '-o'])
+  t.after(() => stop(server))
+  await until(() => /ws:\/\/localhost:\d+/.test(server.output), server)
+  assert.match(server.output, /local test: shared key, members only/)
+  assert.doesNotMatch(server.output, /lab2026/, 'the shared key is not printed')
+  const url = server.output.match(/ws:\/\/localhost:\d+/)[0]
+  const [a, stateA] = await login(t, url, 'devA', 'lab2026')
+  const [b, stateB] = await login(t, url, 'devB', 'lab2026')
+  assert.deepEqual([stateA, stateB, a.cid, b.cid], ['ready', 'ready', 'devA', 'devB'])
+  assert.equal((await login(t, url, 'devC', 'devC'))[1], 'auth_fail')
+
+  const anonymous = new IO()
+  t.after(() => anonymous.stop())
+  const anonymousReady = new Promise(resolve => anonymous.once('ready', resolve))
+  anonymous.open(url)
+  await anonymousReady
+  const received = []
+  b.on('room', (tag, text) => received.push(text))
+  b.subscribe('room')
+  await delay(200)
+  anonymous.signal('room', 'from anonymous')
+  a.signal('room', 'from devA')
+  await until(() => received.includes('from devA'))
+  await delay(200)
+  assert.deepEqual(received, ['from devA'])
+})

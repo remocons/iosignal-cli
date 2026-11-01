@@ -17,7 +17,8 @@ export function getNetworkAddress (){
   };
 
 
-export function serverInfo ( server ){
+/** @param {string|null} [auth] authentication shown in the box, e.g. 'local test: key = ID' */
+export function serverInfo ( server, auth = null ){
 
     let ip = getNetworkAddress();
     let message
@@ -61,6 +62,12 @@ export function serverInfo ( server ){
         message += `\n ${chalk.bold(`${prefix}host:`)} ${ip}`;
         message += `\n ${chalk.bold('- port:')} ${server.congPort }`;
 
+    }
+
+    if (auth) {
+      message += `\n\n`;
+      message += chalk.green('Authentication');
+      message += `\n ${chalk.bold(prefix)}${auth}`;
     }
 
     return boxen(message, { padding: 1, borderColor: 'green', margin: 1, })

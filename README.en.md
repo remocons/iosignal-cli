@@ -99,6 +99,28 @@ Without authentication options, no authentication provider is configured.
 The CLI does not print authentication keys supplied through startup options.
 Command-line arguments may appear in shell history or process listings, so an authentication file is recommended for server credentials.
 
+### Local test logins
+
+`--id-key` and `--shared-key` turn on authentication without a key list. The login ID becomes the CID.
+They need iosignal 8.1.0 or later.
+
+```sh
+io-server -l 7777 -L 8888 --id-key        # log in when the key equals the ID
+io-client -i dev1 -k dev1
+
+io-server -l 7777 -k lab2026 -M           # any ID with the shared key; drop anonymous signals
+io-client -i dev1 -k lab2026
+```
+
+| Option | Behavior |
+| --- | --- |
+| `-i, --id-key` | Any ID logs in when its key equals the ID |
+| `-k, --shared-key <key>` | Any ID logs in with the shared key |
+| `-M, --members-only` | Drop signals from connections that are not authenticated (also works with the other auth options) |
+
+Anonymous connections are still accepted without `-M`. `--id-key` and `--shared-key` cannot be combined with each other or with another server authentication option.
+Anyone who knows the rule can log in under any ID, so use them only for tests on a trusted local network.
+
 ## Subscribing and publishing
 
 Start two clients and subscribe in the first:
