@@ -2,7 +2,7 @@
 
 [한국어](README.md) | [English](README.en.md)
 
-CLI 패키지 버전은 **7.2.0**이며, 저장소는 IOSignal **7.2.0**을 사용합니다. 서버·peer ping 처리와 대화형 로그 개선을 포함합니다.
+CLI 패키지 버전은 **9.0.0**이며, IOSignal **9.0.0** 이상을 사용합니다. 인증 항목의 레벨이 역할(role)과 쿼터 프로필(quota)로 바뀌었고, 서버 출력 옵션 이름이 바뀌었습니다. 8.x에서 올라온다면 [8.x에서 업그레이드](#8x에서-업그레이드)를 확인하세요.
 
 iosignal-cli는 IOSignal 서버와 대화형 클라이언트를 실행하는 CLI입니다.
 
@@ -26,6 +26,21 @@ npm test
 node bin/io-server.js --help
 node bin/io-client.js --help
 ```
+
+### 8.x에서 업그레이드
+
+9.0.0은 호환되지 않는 변경을 포함합니다. 이전 서버 옵션은 `unknown option` 오류로 실행되지 않습니다.
+
+| 8.x | 9.0.0 |
+|---|---|
+| `--timeout <ms>` | `-t, --heartbeat-interval <ms>` |
+| `-m, --metric <mode>` (0~3) | `-m, --log-stats <ms>` (0 또는 1000 이상, N밀리초마다 요약 한 줄) |
+| `-s, --show-message message` | `-s, --log-messages` (값 없음) |
+| 인증 항목 `id.key.cid.level` | `id.key.cid[.role[.quota]]` |
+| 인증 파일 `[id, key, cid, level]` | `[id, key, cid, role?, quota?]` |
+| 레벨별 quota 표, 서버 설정에 따라 적용 여부 결정 | 모든 연결에 쿼터 프로필 적용, 미인증 연결은 `-q, --anonymous-quota`로 선택 |
+
+레벨 숫자는 역할로 옮깁니다. 예전 관리자 항목(`admin.admin-key.admin.255`)은 `admin.admin-key.admin.admin`이 됩니다. `sudo` 서비스는 `admin` 역할만 쓸 수 있습니다.
 
 ## 서버와 클라이언트 실행
 
@@ -109,7 +124,6 @@ CLI는 시작 옵션에 포함된 인증 키를 출력하지 않습니다.
 ### 로컬 테스트 로그인
 
 키 목록 없이 인증을 켜려면 `--id-key` 또는 `--shared-key`를 사용합니다. 로그인 ID가 그대로 CID가 됩니다.
-iosignal 8.1.0 이상이 필요합니다.
 
 ```sh
 io-server -l 7777 -L 8888 --id-key        # 키가 ID와 같으면 로그인
@@ -160,7 +174,7 @@ SDK의 `io.listen(tag, handler)`처럼 사용자 핸들러를 등록하는 명�
 | `sudo <command> [args...]` | sudo 서비스 호출; 서버 권한 필요 |
 | `auth <id> <key>` / `login <id> <key>` | 자동 로그인용 인증 설정 / 서버 인증 challenge를 이용한 로그인 시도; 단일 `id.key` 인자도 가능 |
 | `hide` / `show` | 수신 message 및 CID 메시지 숨김 / 표시; 제어·상태 메시지는 유지 |
-| `id` / `ch` / `quota` | 현재 연결, 구독, quota 조회 |
+| `id` / `ch` / `quota` | 현재 연결(상태, CID, 인증 여부), 구독, 적용 중인 quota 조회 |
 | `ping [cid]` / `pong` / `pping <cid>` | 인자 없이 서버 ping · CID 지정 시 peer ping · pping은 별칭 |
 | `echo [text]` / `iam [name]` | echo 요청 / 별명 조회·설정; text와 name은 한 토큰 |
 | `encNo` / `encYes` / `encAuto` / `encMode` | 암호화 모드 변경 / 조회 |
@@ -191,12 +205,13 @@ Redis 연결이 완료된 뒤 서버를 시작하며, 연결 실패 시 오류�
 
 ```sh
 node test_auth_redis/redis_addAdmin.js admin admin-key admin
-node test_auth_redis/redis_addMultipleDevice.js uno 1 10
+node test_auth_redis/redis_addMultipleDevice.js uno 10 basic
 node test_auth_redis/redis_add_get_device.js
 node test_auth_redis/server-auth-redis.js
 ```
 
-앞의 세 스크립트는 Redis에 예제 인증 데이터를 기록합니다. 다중 장치 예제는 ID와 같은 키를 생성합니다.
+앞의 세 스크립트는 Redis에 예제 인증 데이터를 기록합니다. 관리자 예제는 `<id> <key> <cid>`를 받아 `admin` 역할로 등록합니다.
+다중 장치 예제는 `<base_id> [count] [quota]`를 받아 `uno0`~`uno9`처럼 ID와 같은 키를 가진 `device` 역할 항목을 만듭니다. quota를 생략하면 `basic`입니다.
 관리자·다중 장치 예제는 Redis `SAVE`도 호출합니다. 서버 예제의 기본 WebSocket 포트는 7777입니다.
 단발성 예제는 작업 완료 후 Redis 연결을 닫고, 오류가 발생하면 종료 코드 1을 반환합니다.
 

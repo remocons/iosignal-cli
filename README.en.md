@@ -2,7 +2,7 @@
 
 [한국어](README.md) | [English](README.en.md)
 
-The CLI package version is **7.2.0**, and the repository uses IOSignal **7.2.0**. The CLI includes server and peer ping handling and improved interactive logs.
+The CLI package version is **9.0.0** and requires IOSignal **9.0.0** or later. Authentication levels are replaced by roles and quota profiles, and server output options were renamed. If you are coming from 8.x, see [Upgrading from 8.x](#upgrading-from-8x).
 
 iosignal-cli runs an IOSignal server or an interactive client.
 
@@ -26,6 +26,21 @@ npm test
 node bin/io-server.js --help
 node bin/io-client.js --help
 ```
+
+### Upgrading from 8.x
+
+9.0.0 contains breaking changes. The old server options now fail with an `unknown option` error.
+
+| 8.x | 9.0.0 |
+|---|---|
+| `--timeout <ms>` | `-t, --heartbeat-interval <ms>` |
+| `-m, --metric <mode>` (0-3) | `-m, --log-stats <ms>` (0, or 1000 and above; one summary line every N ms) |
+| `-s, --show-message message` | `-s, --log-messages` (no value) |
+| Auth entry `id.key.cid.level` | `id.key.cid[.role[.quota]]` |
+| Auth file `[id, key, cid, level]` | `[id, key, cid, role?, quota?]` |
+| Level-based quota table, enforced only when enabled | Every connection uses a quota profile; choose the unauthenticated one with `-q, --anonymous-quota` |
+
+Map level numbers to roles. The old administrator entry `admin.admin-key.admin.255` becomes `admin.admin-key.admin.admin`. Only the `admin` role may use the `sudo` service.
 
 ## Running a server and client
 
@@ -108,7 +123,6 @@ Command-line arguments may appear in shell history or process listings, so an au
 ### Local test logins
 
 `--id-key` and `--shared-key` turn on authentication without a key list. The login ID becomes the CID.
-They need iosignal 8.1.0 or later.
 
 ```sh
 io-server -l 7777 -L 8888 --id-key        # log in when the key equals the ID
@@ -159,7 +173,7 @@ Interactive arguments are separated by whitespace; shell-style quoting is not in
 | `sudo <command> [args...]` | Call the sudo service; server permission required |
 | `auth <id> <key>` / `login <id> <key>` | Configure automatic login / attempt login using the server's authentication challenge; a single `id.key` argument is also accepted |
 | `hide` / `show` | Hide / show received channel and direct messages; control and status messages remain visible |
-| `id` / `ch` / `quota` | Show the current connection, subscriptions, or quota |
+| `id` / `ch` / `quota` | Show the current connection (state, CID, authorization), subscriptions, or the applied quota |
 | `ping [cid]` / `pong` / `pping <cid>` | Ping the server without a CID, or a peer with a CID; `pping` is an alias |
 | `echo [text]` / `iam [name]` | Request an echo / query or set a nickname; text and name each use one token |
 | `encNo` / `encYes` / `encAuto` / `encMode` | Change / inspect the encryption mode |
@@ -190,12 +204,13 @@ The [Redis authentication examples](test_auth_redis/) use the same environment v
 
 ```sh
 node test_auth_redis/redis_addAdmin.js admin admin-key admin
-node test_auth_redis/redis_addMultipleDevice.js uno 1 10
+node test_auth_redis/redis_addMultipleDevice.js uno 10 basic
 node test_auth_redis/redis_add_get_device.js
 node test_auth_redis/server-auth-redis.js
 ```
 
-The first three scripts write sample authentication data to Redis. The multiple-device example generates keys identical to the IDs.
+The first three scripts write sample authentication data to Redis. The administrator example takes `<id> <key> <cid>` and registers it with the `admin` role.
+The multiple-device example takes `<base_id> [count] [quota]` and creates `device` entries such as `uno0` to `uno9`, each with a key identical to its ID. Without a quota, devices use `basic`.
 The administrator and multiple-device examples also call Redis `SAVE`. The server example uses WebSocket port 7777 by default.
 One-off examples close Redis connections when finished and exit with code 1 on error.
 
