@@ -43,7 +43,7 @@ io-client -c cong://localhost:8888
 `ioip` prints local IPv4 addresses, and `io-keygen` generates candidate authentication IDs and keys.
 Ports must be integers from 0 to 65535; 0 lets the operating system select a port.
 
-The server's `--timeout` sets the heartbeat and connection check interval in milliseconds: 1000–2147483647, default 50000.
+The server's `-t, --heartbeat-interval` sets the liveness (heartbeat) check interval in milliseconds: 1000–2147483647, default 50000.
 Specify at least one of `-l` or `-L` for the server. Without `-c`, the client connects to `ws://localhost:7777`.
 Using `-c` or `--connect` without an address connects to the official server at `wss://io.iosignal.net/ws`.
 You can combine this with other options, for example `io-client -c -j demo`.
@@ -54,7 +54,7 @@ You can combine this with other options, for example `io-client -c -j demo`.
 io-client -h                    # Startup options and all interactive commands
 io-server -h                    # Server options and examples
 io-client -V                    # CLI and IOSignal versions
-io-server -l 7777 -m 2 -s message
+io-server -l 7777 -m 5000 -s
 ```
 
 Type `help` while the client is running. Command names have no leading dot (`.`).
@@ -63,11 +63,14 @@ The old `.help`, `.sub`, and `.pub` syntax is unsupported; use `help`, `sub`, an
 
 | Server option | Description |
 | --- | --- |
-| `-m, --metric <mode>` | 0: off (default), 1: summary, 2: connections, 3: channels |
-| `-s, --show-message <mode>` | `none` (default) or `message`: log received messages |
+| `-m, --log-stats <ms>` | Print a one-line summary (connections, channels, rates, memory) every N ms; 0: off (default), or 1000 and above |
+| `-s, --log-messages` | Log the type and tag of each received message, never its payload |
+| `-q, --anonymous-quota <profile>` | Quota profile of unauthenticated connections: `anonymous` (default), `basic`, `pro`, `unlimited` |
 | `-f, --file-logger` | Write `connection.log`, `auth.log`, and `attack.log` in the current working directory |
 | `-a, --attach-services [list...]` | Space-separated services: `reply`, `sudo`, `redis`; none by default |
 | `-o, --show-options` | Print initial settings and registered service names |
+
+Every connection uses a quota profile (message size, publish fan-out, messages and bytes per second, connections per account). The default `anonymous` profile of unauthenticated connections accepts messages up to 256 KiB; use `-q unlimited` to test larger messages.
 
 Register built-in services when starting the server. For example, connect a client to this server and enter `call reply echo hello`:
 
@@ -83,12 +86,15 @@ io-client -i uno -k uno-key
 ```
 
 See the [JSON example](auth_file_sample/auth_file.json) and [JavaScript example](auth_file_sample/auth_file.js) for authentication data formats.
-A JSON file contains a list of `[id, key, cid, level]` arrays. A JavaScript file provides the same list as the named export `authInfo`.
+A JSON file contains a list of `[id, key, cid, role?, quota?]` arrays. A JavaScript file provides the same list as the named export `authInfo`.
 Example paths are relative to the cloned repository. After a global installation, specify the path to your own authentication file.
-Command-line entries use `id.key.cid.level`; separate multiple entries with commas.
+Command-line entries use `id.key.cid[.role[.quota]]`; separate multiple entries with commas.
+
+- `role`: `device` (default), `service`, or `admin`. Only `admin` may use the `sudo` service.
+- `quota`: a quota profile name. By default a `device` uses `basic`, and `service` and `admin` use `unlimited`.
 
 ```sh
-io-server -l 7777 --auth-param 'uno.uno-key.uno.1,admin.admin-key.admin.255'
+io-server -l 7777 --auth-param 'uno.uno-key.uno,admin.admin-key.admin.admin'
 io-client --auth-idKey uno.uno-key
 ```
 

@@ -215,7 +215,7 @@ io.on('auth_clear', () => {
 io.on('over_size', () => {
   wsConsole.print(
     Console.Types.Control,
-    `OVER_SIZE: your signalSize limit is: ${io.quota.signalSize}`,
+    `OVER_SIZE: your maxMessageBytes limit is: ${io.quota.maxMessageBytes ?? 'unlimited'}`,
     Console.Colors.Yellow)
 })
 
@@ -287,7 +287,7 @@ wsConsole.on('line', (data) => {
         break;
 
       case 'id':
-        wsConsole.reply(`state: ${io.stateName} cid: ${io.cid} level: ${io.level}`)
+        wsConsole.reply(`state: ${io.stateName} cid: ${io.cid} authorized: ${io.boho?.isAuthorized === true}`)
         break;
 
       case 'sudo':

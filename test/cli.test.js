@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { port, timeout, binarySize, formatPayload } from '../lib/cli.js'
+import { port, heartbeatInterval, logStats, binarySize, formatPayload } from '../lib/cli.js'
 import { redisOptions } from '../lib/redis.js'
 
 const run = (file, args) => spawnSync(process.execPath, [`bin/${file}.js`, ...args], { encoding: 'utf8', timeout: 5000 })
@@ -15,14 +15,14 @@ test('CLI help and version load with installed iosignal', () => {
   }
 })
 test('invalid server options fail before listening', () => {
-  for (const args of [['-l','7777oops'], ['-l','65536'], ['-L','-1'], ['-t','0'], ['-t','1000oops']]) {
+  for (const args of [['-l','7777oops'], ['-l','65536'], ['-L','-1'], ['-t','0'], ['-t','1000oops'], ['-m','999'], ['-m','5s']]) {
     const result = run('io-server', args)
     assert.equal(result.status, 1, result.stderr)
     assert.match(result.stderr, /integer/)
   }
 })
 test('local auth options cannot be combined and need a key', () => {
-  for (const args of [['-l','0','-i','-k','lab'], ['-l','0','-i','-e','a.b.c.3'], ['-l','0','-k','lab','-r'], ['-l','0','-k','']]) {
+  for (const args of [['-l','0','-i','-k','lab'], ['-l','0','-i','-e','a.b.c'], ['-l','0','-k','lab','-r'], ['-l','0','-k','']]) {
     const result = run('io-server', args)
     assert.equal(result.status, 1, result.stderr)
     assert.match(result.stderr, /--id-key|--shared-key/)
@@ -36,7 +36,8 @@ test('client rejects unsupported timeout', () => {
 test('numeric bounds include ephemeral ports and reject malformed or excessive sizes', () => {
   assert.equal(port('0'), 0)
   assert.equal(port('65535'), 65535)
-  assert.equal(timeout('1000'), 1000)
+  assert.equal(heartbeatInterval('1000'), 1000)
+  assert.deepEqual([logStats('0'), logStats('1000')], [0, 1000])
   assert.equal(binarySize('0'), 0)
   assert.equal(binarySize('1048576'), 1048576)
   for (const value of [undefined, '-1', 'NaN', '2.5', '3foo', '1048577']) assert.throws(() => binarySize(value))

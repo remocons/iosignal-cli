@@ -43,7 +43,7 @@ io-client -c cong://localhost:8888
 `ioip`는 로컬 IPv4 주소를 출력하고, `io-keygen`은 인증용 ID와 키 후보를 생성합니다.
 포트는 0~65535 정수이며, 0은 운영체제가 포트를 선택하도록 합니다.
 
-서버의 `--timeout`은 heartbeat 및 연결 확인 주기입니다. 밀리초 단위이며 1000~2147483647 범위를 받습니다(기본 50000).
+서버의 `-t, --heartbeat-interval`은 연결 확인(heartbeat) 주기입니다. 밀리초 단위이며 1000~2147483647 범위를 받습니다(기본 50000).
 서버는 `-l`, `-L` 중 하나 이상을 지정해야 합니다. 클라이언트는 `-c` 옵션을 생략하면 `ws://localhost:7777`을 사용합니다.
 `-c` 또는 `--connect`만 지정하고 주소를 생략하면 공식 서버 `wss://io.iosignal.net/ws`에 접속합니다.
 `io-client -c -j demo`처럼 다른 옵션과 함께 사용할 수도 있습니다.
@@ -54,7 +54,7 @@ io-client -c cong://localhost:8888
 io-client -h                    # 시작 옵션과 전체 대화형 명령
 io-server -h                    # 서버 옵션과 실행 예제
 io-client -V                    # CLI 및 IOSignal 버전
-io-server -l 7777 -m 2 -s message
+io-server -l 7777 -m 5000 -s
 ```
 
 클라이언트 실행 중에는 `help`를 입력합니다. 명령 앞에 점(`.`)을 붙이지 않습니다.
@@ -63,11 +63,14 @@ io-server -l 7777 -m 2 -s message
 
 | 서버 옵션 | 설명 |
 |---|---|
-| `-m, --metric <mode>` | 0: 끔(기본), 1: 요약, 2: 연결 목록, 3: 채널 목록 |
-| `-s, --show-message <mode>` | `none`(기본) 또는 `message`: 수신 메시지 로그 |
+| `-m, --log-stats <ms>` | N밀리초마다 연결·채널·초당 처리량·메모리 요약 한 줄 출력 (0: 끔(기본), 1000 이상) |
+| `-s, --log-messages` | 수신 메시지의 종류와 태그 로그 (내용은 출력하지 않음) |
+| `-q, --anonymous-quota <profile>` | 미인증 연결의 쿼터 프로필: `anonymous`(기본), `basic`, `pro`, `unlimited` |
 | `-f, --file-logger` | 현재 작업 디렉터리에 `connection.log`, `auth.log`, `attack.log` 기록 |
 | `-a, --attach-services [list...]` | `reply`, `sudo`, `redis` 중 공백으로 구분하여 지정; 기본은 없음 |
 | `-o, --show-options` | 초기 설정과 등록된 서비스 이름 출력 |
+
+모든 연결에는 쿼터 프로필이 적용됩니다(메시지 크기, 채널 발행 전달 수, 초당 메시지·바이트, 계정별 동시 연결). 미인증 연결의 기본 `anonymous` 프로필은 메시지를 256 KiB까지 받으므로, 큰 메시지를 시험하려면 `-q unlimited`를 사용하세요.
 
 내장 서비스를 호출하려면 서버 시작 시 등록해야 합니다. 예를 들어 다음 서버에 클라이언트로 접속한 뒤 `call reply echo hello`를 입력합니다.
 
@@ -84,12 +87,15 @@ io-client -i uno -k uno-key
 
 인증 데이터 형식은 [JSON 예제](auth_file_sample/auth_file.json)와
 [JavaScript 예제](auth_file_sample/auth_file.js)를 참고하세요.
-JSON 파일은 `[id, key, cid, level]` 배열들의 목록이며, JavaScript 파일은 같은 목록을 `authInfo`로 named export합니다.
+JSON 파일은 `[id, key, cid, role?, quota?]` 배열들의 목록이며, JavaScript 파일은 같은 목록을 `authInfo`로 named export합니다.
 예제 파일 경로는 이 저장소를 내려받은 디렉터리를 기준으로 합니다. 전역 설치 후에는 준비한 인증 파일의 경로를 지정하세요.
-명령 인자로 지정할 때는 `id.key.cid.level` 형식을 사용하고, 여러 항목은 쉼표로 구분합니다.
+명령 인자로 지정할 때는 `id.key.cid[.role[.quota]]` 형식을 사용하고, 여러 항목은 쉼표로 구분합니다.
+
+- `role`: `device`(기본), `service`, `admin`. `sudo` 서비스는 `admin`만 쓸 수 있습니다.
+- `quota`: 쿼터 프로필 이름. 생략하면 `device`는 `basic`, `service`와 `admin`은 `unlimited`입니다.
 
 ```sh
-io-server -l 7777 --auth-param 'uno.uno-key.uno.1,admin.admin-key.admin.255'
+io-server -l 7777 --auth-param 'uno.uno-key.uno,admin.admin-key.admin.admin'
 io-client --auth-idKey uno.uno-key
 ```
 

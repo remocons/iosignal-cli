@@ -4,7 +4,7 @@ import { withRedis } from '../lib/redis.js'
 await withRedis(async redisClient => {
   let auth = new BohoAuth( new RedisKeyProvider( redisClient))
 
-  //addUSer(did,dkey,cid,level)
+  // addAuth(did, key, cid, role, quota): role 'admin' may use sudo.
   if( process.argv.length != 5 ){
     throw new Error('usage: node test_auth_redis/redis_addAdmin.js <id> <key> <cid>')
   }
@@ -13,7 +13,7 @@ await withRedis(async redisClient => {
   let dkey = process.argv[3]
   let cid = process.argv[4]
 
-  let addResult = await auth.addAuth( did, dkey, cid ,255)
+  let addResult = await auth.addAuth( did, dkey, cid, 'admin')
   let getResult = await auth.getAuth( did )
   let saveResult = await auth.save();
 

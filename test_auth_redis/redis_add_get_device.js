@@ -4,8 +4,8 @@ import { withRedis } from '../lib/redis.js'
 await withRedis(async redisClient => {
   let auth = new BohoAuth( new RedisKeyProvider( redisClient))
 
-  //addUSer(did,dey,cid,level)
-  let addResult = await auth.addAuth('uno','uno','uno',1)
+  // addAuth(did, key, cid, role, quota)
+  let addResult = await auth.addAuth('uno','uno','uno','device')
   let getResult = await auth.getAuth('uno')
   let wrongResult = await auth.getAuth('noid')
 

@@ -1,9 +1,7 @@
 [
-  ["did","passowrd","cid",0],
-  ["uno","uno-key","uno",1],
-  ["go","go-key","go",2],
-  ["bro","bro-key","bro",3],
-  ["admin","admin-key","admin",255]
+  ["did","passowrd","cid"],
+  ["uno","uno-key","uno"],
+  ["go","go-key","go","device","pro"],
+  ["bro","bro-key","bro","service"],
+  ["admin","admin-key","admin","admin"]
 ]
-
-

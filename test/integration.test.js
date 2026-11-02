@@ -104,7 +104,7 @@ test('Redis examples, authentication and graceful shutdown', { timeout: 20000, s
   const env = { REDIS_HOST: '127.0.0.1', REDIS_PORT: String(port) }
   for (const args of [
     ['test_auth_redis/redis_addAdmin.js', 'admin', 'test-secret-key', 'admin'],
-    ['test_auth_redis/redis_addMultipleDevice.js', 'device', '1', '2'],
+    ['test_auth_redis/redis_addMultipleDevice.js', 'device', '2', 'basic'],
     ['test_auth_redis/redis_add_get_device.js']
   ]) {
     const example = launch(args, env)
@@ -194,4 +194,35 @@ test('--shared-key with --members-only logs in any ID and drops anonymous signal
   await until(() => received.includes('from devA'))
   await delay(200)
   assert.deepEqual(received, ['from devA'])
+})
+
+test('server settings: heartbeat interval, stats and message logs, anonymous quota and role entries', { timeout: 15000 }, async t => {
+  const server = launch(['bin/io-server.js', '-l', '0', '-t', '2000', '-m', '0', '-s', '-q', 'unlimited',
+    '-e', 'uno.uno-key.uno,adm.adm-key.adm.admin', '-a', 'sudo'])
+  t.after(() => stop(server))
+  await until(() => /ws:\/\/localhost:\d+/.test(server.output), server)
+  const url = server.output.match(/ws:\/\/localhost:\d+/)[0]
+  // Anonymous connections use the unlimited profile: no local message size limit.
+  const anonymous = new IO()
+  t.after(() => anonymous.stop())
+  const ready = new Promise(resolve => anonymous.once('ready', resolve))
+  anonymous.open(url)
+  await ready
+  assert.deepEqual(anonymous.quota, { maxMessageBytes: null })
+  // A device (default quota basic) may not use sudo; the admin role may.
+  const [device] = await login(t, url, 'uno', 'uno-key')
+  assert.deepEqual(device.quota, { maxMessageBytes: 1024 * 1024 })
+  await assert.rejects(device.call('sudo', 'cid'))
+  const [admin] = await login(t, url, 'adm', 'adm-key')
+  assert.equal((await admin.call('sudo', 'cid')).ok, true)
+  await until(() => /\[rx\] #\d+ adm WS CALL(\(enc\))? sudo\.cid/.test(server.output), server)
+})
+
+test('removed and invalid server settings fail before listening', { timeout: 10000 }, async () => {
+  for (const [args, pattern] of [[['--timeout', '2000'], /unknown option/], [['--metric', '1'], /unknown option/],
+    [['-q', 'gold'], /anonymousQuota must be one of the quotas/], [['-e', 'uno.key.uno.3'], /invalid key entry/]]) {
+    const child = launch(['bin/io-server.js', '-l', '0', ...args])
+    await child.done
+    assert.match(child.output, pattern, args.join(' '))
+  }
 })

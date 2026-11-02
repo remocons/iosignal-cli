@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { connectRedis, closeRedis } from '../lib/redis.js'
-import { port, timeout } from '../lib/cli.js'
+import { port, heartbeatInterval, logStats } from '../lib/cli.js'
 import { program } from 'commander'
 import { serverHelp } from '../lib/help.js'
 import { serverInfo } from './serverInfo.js';
@@ -9,9 +9,6 @@ import {
   Server, serverOption, replyService, sudoService, RedisService, version as iosignal_version,
   BohoAuth, FileKeyProvider, StringKeyProvider, RedisKeyProvider
 } from 'iosignal'
-import * as iosignal from 'iosignal'
-// Exported from iosignal 8.1.0, together with the localAuth server option.
-const { LocalKeyProvider } = iosignal
 
 import pkg from '../package.json' with { type: 'json' };
 const cli_version = pkg.version;
@@ -25,14 +22,15 @@ program
   .option('-l, --listen <port>', 'WebSocket port (0..65535; 0 = automatically assigned)', port)
   .option('-L, --listen-congport <port>', 'CongSocket TCP port (0..65535; 0 = automatically assigned)', port)
   .option('-d, --auth-file <path>', 'authentication data file (.json or .js)')
-  .option('-e, --auth-param <id.key.cid.level>', 'authentication entries: id.key.cid.level, separated by commas')
+  .option('-e, --auth-param <id.key.cid[.role[.quota]]>', 'authentication entries, separated by commas')
   .option('-r, --auth-redis', 'authenticate using Redis (REDIS_HOST / REDIS_PORT)')
   .option('-i, --id-key', 'local test login without a key list: any ID whose key equals the ID (CID = ID)')
   .option('-k, --shared-key <key>', 'local test login without a key list: any ID with this shared key (CID = ID)')
   .option('-M, --members-only', 'drop signals from connections that are not authenticated')
-  .option('-t, --timeout <milliseconds>', 'server heartbeat/check interval (1000..2147483647 ms; default: 50000)', timeout)
-  .option('-m, --metric <mode>', 'monitor: 0=off, 1=summary, 2=connections, 3=channels (default: 0)')
-  .option('-s, --show-message <none|message>', 'log received messages: none or message (default: none)')
+  .option('-t, --heartbeat-interval <milliseconds>', 'liveness check interval (1000..2147483647 ms; default: 50000)', heartbeatInterval)
+  .option('-m, --log-stats <milliseconds>', 'print a stats summary every N ms (0 = off, or 1000..2147483647)', logStats)
+  .option('-s, --log-messages', 'log each received message: type and tag, never the payload')
+  .option('-q, --anonymous-quota <profile>', 'quota profile of unauthenticated connections: anonymous (default), basic, pro, unlimited')
   .option('-f, --file-logger', 'write connection.log, auth.log and attack.log in the working directory')
   .option('-a, --attach-services [list...]', 'built-in services: reply sudo redis (space-separated; none by default)')
   .option('-o, --show-options', 'print initialization options and attached service names')
@@ -57,20 +55,12 @@ if (options.fileLogger) {
   serverOption.fileLogger.attack.use = true;
 }
 
-if (options.showMessage) {
-  serverOption.showMessage = options.showMessage
-}
-
-if (options.metric) {
-  serverOption.showMetric = options.metric
-}
-
-if (options.timeout) {
-  serverOption.timeout = options.timeout
-}
-
-// private port, congPort
+// settings of this server (see iosignal Server options)
 let privateServerOptions = { };
+if (options.heartbeatInterval !== undefined) privateServerOptions.heartbeatInterval = options.heartbeatInterval
+if (options.logStats !== undefined) privateServerOptions.logStats = options.logStats
+if (options.logMessages) privateServerOptions.logMessages = true
+if (options.anonymousQuota !== undefined) privateServerOptions.anonymousQuota = options.anonymousQuota
 let authLabel = null;
 if (options.idKey) {
   privateServerOptions.localAuth = 'idKey'
@@ -113,10 +103,6 @@ try {
 
 
   if (options.attachServices?.includes('redis') && !redisClient) redisClient = await connectRedis();
-  if (privateServerOptions.localAuth && typeof LocalKeyProvider !== 'function') {
-    // iosignal 8.0.0 ignores localAuth and would serve everyone anonymously.
-    throw new Error(`--id-key and --shared-key need iosignal 8.1.0 or later (installed: ${iosignal_version})`)
-  }
   server = new Server( privateServerOptions , authManager);
 
   if (options.attachServices && options.attachServices.length > 0) {
