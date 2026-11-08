@@ -362,6 +362,10 @@ wsConsole.on('line', (data) => {
         toks.shift()
         let tag = toks[0]
         if(tag){
+          // A subscription needs a ready connection (CID received); before that it would be lost.
+          if (io.stateName !== 'ready') {
+            throw new Error(`not connected (state: ${io.stateName}); subscribe again once the state is ready`)
+          }
           io.subscribe( tag )
           let tagList = tag.split(',')
           tagList.forEach( (v)=>{
