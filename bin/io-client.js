@@ -178,6 +178,8 @@ const peerPings = createPingSession(io, {
 process.once('exit', () => peerPings.dispose())
 
 io.on('ready', () => {
+  // The name monitors show for this connection ('/iam <name>' still renames it until the next reconnect).
+  io.iam('iosignal-cli')
   wsConsole.print(
     Console.Types.Control,
     '[연결] 접속 완료',
