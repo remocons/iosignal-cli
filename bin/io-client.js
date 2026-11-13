@@ -87,7 +87,8 @@ class Console extends EventEmitter {
 
   // Replaces the line just above the prompt (the ping line). Terminal only.
   rewriteLast(msg, kind = 'reply') {
-    this.stdout.write('\r\u001b[2K\u001b[1A\r\u001b[2K' + formatLog(msg, { kind, timestamps: this.timestamps, color: !process.env.NO_COLOR }) + '\n')
+    this.clear()
+    this.stdout.write('\u001b[1A\r\u001b[2K' + formatLog(msg, { kind, timestamps: this.timestamps, color: !process.env.NO_COLOR }) + '\n')
     this.prompt()
   }
 
@@ -102,10 +103,16 @@ class Console extends EventEmitter {
     else this.stdout.write(msg + '\n')
   }
 
+  // Erases the prompt and what is being typed, every row of it when it wraps, so a message can be written
+  // there; prompt() then draws the typed text again with the cursor where it was.
   clear() {
-    if (tty.isatty(1)) {
-      this.stdout.write('\r\u001b[2K\u001b[3D')
-    }
+    if (!tty.isatty(1)) return
+    const rows = this.readlineInterface.terminal ? this.readlineInterface.getCursorPos().rows : 0
+    readline.moveCursor(this.stdout, 0, -rows)
+    readline.cursorTo(this.stdout, 0)
+    readline.clearScreenDown(this.stdout)
+    // readline redraws by moving up the rows it last drew; the cursor is already at the top of them.
+    this.readlineInterface.prevRows = 0
   }
 
   pause() {
