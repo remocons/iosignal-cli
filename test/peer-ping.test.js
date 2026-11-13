@@ -16,7 +16,14 @@ test('ping without CID uses protocol; peer ping/response use one TEXT CID',()=>{
  io.emit('@','@ping','bad@route');io.emit('@','@ping',{cid:'C'});io.emit('@','@ping','C','extra');assert.equal(sent.length,3);session.dispose();
 });
 test('new library pong event and old raw packet path never duplicate output',()=>{
- const {io,session,pongs}=fixture();io.emit('pong');io.emit('socket_data',new Uint8Array([0xce]));assert.deepEqual(pongs,['']);session.dispose();
+ const {io,session,pongs}=fixture();session.ping();io.emit('pong');io.emit('socket_data',new Uint8Array([0xce]));assert.deepEqual(pongs,['']);session.dispose();
+});
+test('a pong nobody asked for (the keep-alive ping) is not reported, and an answer carries its time',()=>{
+ const io=new EventEmitter();Object.assign(io,{cid:'A',stateName:'ready',signal(){},ping(){}});const got=[];
+ const session=createPingSession(io,{onPong:(cid,ms)=>got.push([cid,ms]),onTimeout(){},timeoutMs:50});
+ io.emit('pong');io.emit('@','@pong','B');assert.deepEqual(got,[]);
+ session.ping();io.emit('pong');io.emit('pong');assert.equal(got.length,1);
+ assert.equal(got[0][0],'');assert.ok(typeof got[0][1]==='number'&&got[0][1]>=0);session.dispose();
 });
 test('timeouts are per target, and disconnection/disposal cancel pending timers',async()=>{
  const {io,session,timeouts,pongs}=fixture();session.ping('B');await delay(35);assert.deepEqual(timeouts,['B']);

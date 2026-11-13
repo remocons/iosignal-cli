@@ -6,6 +6,7 @@ import tty from 'tty'
 import { format } from 'node:util'
 import { formatLog } from '../lib/log.js'
 import { createPingSession } from '../lib/peer-ping.js'
+import { createPingDisplay } from '../lib/ping-line.js'
 import { binarySize, formatPayload } from '../lib/cli.js'
 import { program } from 'commander'
 import { clientHelp, interactiveHelp } from '../lib/help.js'
@@ -21,6 +22,8 @@ class Console extends EventEmitter {
     super()
 
     this.showIncommingMessage = true
+    // Lines written so far, printed or typed: the ping line is changed in place only while it is the last.
+    this.lines = 0
     this.stdin = process.stdin
     this.stdout = process.stdout
     this.stderr = process.stderr
@@ -65,6 +68,7 @@ class Console extends EventEmitter {
   }
 
   print(type, msg, color, kind = type === Console.Types.Error ? 'error' : type === Console.Types.Control ? 'status' : 'reply') {
+    this.lines++
     if (tty.isatty(1)) {
       this.clear()
       const display = kind === 'incoming' ? msg.replace(/^CID Message: /, '직접 ').replace(/^-message: /, '채널 ') : msg
@@ -79,6 +83,17 @@ class Console extends EventEmitter {
     } else {
       // is a control message and we're not in a tty... drop it.
     }
+  }
+
+  // Replaces the line just above the prompt (the ping line). Terminal only.
+  rewriteLast(msg, kind = 'reply') {
+    this.stdout.write('\r\u001b[2K\u001b[1A\r\u001b[2K' + formatLog(msg, { kind, timestamps: this.timestamps, color: !process.env.NO_COLOR }) + '\n')
+    this.prompt()
+  }
+
+  // Removes the command line the user just entered, so a repeated ping keeps one line on screen.
+  eraseTypedLine() {
+    this.stdout.write('\u001b[1A\r\u001b[2K')
   }
 
   reply(...args) {
@@ -171,11 +186,20 @@ if (options.joinChannel) {
 
 wsConsole.print(Console.Types.Control, `[연결] 접속 중 · ${connectUrl}`, Console.Colors.Yellow)
 
-const peerPings = createPingSession(io, {
-  onPong: cid => wsConsole.print(Console.Types.Incoming, cid ? `pong (${cid})` : 'pong', Console.Colors.Yellow),
-  onTimeout: cid => wsConsole.print(Console.Types.Error, `ping timeout${cid ? ` (${cid})` : ''}`, Console.Colors.Red)
+// A ping is one line that changes in place (lib/ping-line.js); pings repeated with Enter keep that line.
+const pingDisplay = createPingDisplay({
+  live: tty.isatty(1),
+  print: (text, kind) => wsConsole.print(kind === 'error' ? Console.Types.Error : Console.Types.Incoming, text, Console.Colors.Yellow, kind),
+  rewrite: (text, kind) => wsConsole.rewriteLast(text, kind),
+  lines: () => wsConsole.lines,
 })
-process.once('exit', () => peerPings.dispose())
+const peerPings = createPingSession(io, {
+  onPong: (cid, ms) => pingDisplay.pong(cid, ms),
+  onTimeout: (cid, ms) => pingDisplay.timeout(cid, ms)
+})
+process.once('exit', () => { pingDisplay.dispose(); peerPings.dispose() })
+// The target of a ping command, or null for any other line.
+const pingTarget = toks => ['ping', 'pping'].includes(toks[0]) && toks.length <= 2 ? toks[1] ?? '' : null
 
 io.on('ready', () => {
   // The name monitors show for this connection ('/iam <name>' still renames it until the next reconnect).
@@ -240,6 +264,10 @@ io.on('message',(tag,...args)=>{
 })
 
 wsConsole.on('line', (data) => {
+  // The typed line stays on screen, except a ping that updates the ping line just above it.
+  const target = pingTarget(data.trim().split(/\s+/))
+  if (target !== null && tty.isatty(1) && pingDisplay.continues(target)) wsConsole.eraseTypedLine()
+  else wsConsole.lines++
   try {
     const line = data.trim()
     if (!line) {
@@ -386,6 +414,7 @@ wsConsole.on('line', (data) => {
       case 'ping':
         if (toks.length > 2) throw new Error('Usage: ping [cid]')
         peerPings.ping(toks[1])
+        pingDisplay.start(toks[1] ?? '')
         break;
 
       case 'pong':

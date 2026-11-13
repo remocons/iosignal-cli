@@ -232,7 +232,7 @@ IOSIGNAL_TEST_REDIS_SERVER=redis-server npm test
 `NO_COLOR=1`로 색상을 끌 수 있습니다. 파이프 출력에는 장식이나 시간이 추가되지 않습니다.
 
 `ping`은 서버에, `ping <cid>`는 상대 장치에 요청합니다. `pping <cid>`는 별칭입니다.
-응답은 `pong` 또는 `pong (<cid>)`이며 3초 후 응답이 없으면 timeout을 표시합니다.
+응답은 한 줄로 표시합니다. 기다리는 동안 `⠋ ping …`이 돌다가 같은 자리에 `✓ pong 23 ms`(peer는 `✓ pong (<cid>) 23 ms`)로 바뀌고, 3초 동안 응답이 없으면 `✗ ping timeout · 3 s`로 바뀝니다. 같은 ping을 연달아 입력하면 줄을 늘리지 않고 `✓ pong 21 ms · 6회 · 평균 23 ms  ▂▃▂▅▂▃`처럼 그 줄을 갱신합니다. 출력이 터미널이 아니면 응답마다 `pong 23 ms` 한 줄을 씁니다. 클라이언트가 연결 유지를 위해 스스로 보내는 ping의 응답은 표시하지 않습니다.
 연결이 끊기면 대기 중인 ping 요청을 취소합니다.
 Peer ping은 송신자 CID를 TEXT 인자 하나로 담은 직접 `@ping` 시그널을 사용합니다. 수신자는 자신의 CID를 담은 `@pong`으로 응답합니다.
 CLI는 수신한 peer ping에 자동 응답하며 `hide` 설정에도 응답합니다.

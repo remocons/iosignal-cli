@@ -231,7 +231,7 @@ Timestamps are hidden by default; enable them with `--timestamps`.
 Set `NO_COLOR=1` to disable colors. Piped output has no decorations or timestamps.
 
 `ping` requests a server response; `ping <cid>` requests a peer response. `pping <cid>` is an alias.
-Replies print `pong` or `pong (<cid>)`; unanswered requests time out after 3 seconds. Disconnecting cancels pending requests.
+The reply is one line: `⠋ ping …` turns while waiting, then the same line becomes `✓ pong 23 ms` (`✓ pong (<cid>) 23 ms` for a peer), or `✗ ping timeout · 3 s` after 3 seconds without one. The same ping entered again updates that line instead of adding one: `✓ pong 21 ms · 6회 · 평균 23 ms  ▂▃▂▅▂▃`. When the output is not a terminal, each reply is one `pong 23 ms` line. Replies to the client's own keep-alive pings are not shown. Disconnecting cancels pending requests.
 Peer requests use a direct `@ping` signal with one TEXT argument containing the sender CID. The responder sends `@pong` back with its own CID.
 CLI clients respond automatically, including when `hide` is enabled.
 The Node CLI handles both legacy WebSocket control PONG frames and IOSignal PONG packets.
