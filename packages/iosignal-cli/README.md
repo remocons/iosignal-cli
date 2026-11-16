@@ -7,7 +7,7 @@ CLI 패키지 버전은 **9.12.0**이며, IOSignal **9.12.0** 이상을 사용�
 iosignal-cli는 IOSignal 서버와 대화형 클라이언트를 실행하는 CLI입니다.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/docs/assets/iosignal-ecosystem.png" alt="IOSignal로 연결되는 서버, CLI, Node.js, Arduino와 원격 제어 웹앱" width="720" />
+  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/packages/iosignal-cli/docs/assets/iosignal-ecosystem.png" alt="IOSignal로 연결되는 서버, CLI, Node.js, Arduino와 원격 제어 웹앱" width="720" />
 </p>
 
 ## 설치
@@ -18,14 +18,16 @@ Node.js 22.16.0 이상이 필요합니다.
 npm install -g iosignal-cli
 ```
 
-저장소에서 개발할 때는 다음 명령을 사용합니다.
+[iosignal-cli 저장소](https://github.com/remocons/iosignal-cli)는 이 패키지와 [remocon](https://www.npmjs.com/package/remocon)을 함께 둡니다(`packages/iosignal-cli`, `packages/remocon`). 저장소에서 개발할 때는 저장소 루트에서 다음 명령을 사용합니다.
 
 ```sh
 npm ci
 npm test
-node bin/io-server.js --help
-node bin/io-client.js --help
+node packages/iosignal-cli/bin/io-server.js --help
+node packages/iosignal-cli/bin/io-client.js --help
 ```
+
+두 CLI가 함께 쓰는 파일(`ping.js`, `ping-line.js`, `log.js`)은 루트의 `shared/`가 원본이고, `npm run sync:shared`가 각 패키지의 `lib/`로 복사합니다. `npm test`와 배포(`prepack`) 때도 복사합니다.
 
 ### 8.x에서 업그레이드
 

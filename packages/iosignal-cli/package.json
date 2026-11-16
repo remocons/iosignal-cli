@@ -26,7 +26,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/remocons/iosignal-cli.git"
+    "url": "git+https://github.com/remocons/iosignal-cli.git",
+    "directory": "packages/iosignal-cli"
   },
   "homepage": "https://iosignal.net",
   "keywords": [
@@ -43,6 +44,7 @@
     "node": ">=22.16.0"
   },
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "prepack": "node ../../scripts/sync-shared.mjs"
   }
 }

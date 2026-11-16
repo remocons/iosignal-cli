@@ -1,0 +1,18 @@
+{
+  "name": "iosignal-cli-workspace",
+  "private": true,
+  "description": "IOSignal command-line tools: iosignal-cli (server and client) and remocon (one-shot and interactive CLI)",
+  "type": "module",
+  "workspaces": [
+    "packages/iosignal-cli",
+    "packages/remocon"
+  ],
+  "scripts": {
+    "sync:shared": "node scripts/sync-shared.mjs",
+    "test": "node scripts/sync-shared.mjs && node --test test/*.test.mjs && npm test --workspaces"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "license": "MIT"
+}

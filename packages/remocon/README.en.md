@@ -7,7 +7,7 @@ The remocon package and its IOSignal dependency use version **9.12.0**. 9.12.0 m
 Connect to an IOSignal server to run one-shot commands, line input, key input, or interactive commands. Requires Node.js 22.16.0 or later.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/remocons/remocon/main/docs/assets/iosignal-ecosystem.png" alt="Server, CLI, Node.js, Arduino and remote web apps connected through IOSignal" width="720" />
+  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/packages/remocon/docs/assets/iosignal-ecosystem.png" alt="Server, CLI, Node.js, Arduino and remote web apps connected through IOSignal" width="720" />
 </p>
 
 ## Installation and usage
@@ -24,12 +24,12 @@ To install the current repository implementation globally, run this in the repos
 npm install -g .
 ```
 
-To run directly from the repository or develop and test:
+The source is in `packages/remocon` of the [iosignal-cli repository](https://github.com/remocons/iosignal-cli), next to iosignal-cli. To run directly from the repository or develop and test, from the repository root:
 
 ```sh
 npm ci
-node bin/remocon.js --help
-node bin/remocon.js -c ws://localhost:7777 pub demo hello
+node packages/remocon/bin/remocon.js --help
+node packages/remocon/bin/remocon.js -c ws://localhost:7777 pub demo hello
 npm test
 ```
 

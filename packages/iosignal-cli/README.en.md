@@ -7,7 +7,7 @@ The CLI package version is **9.12.0** and requires IOSignal **9.12.0** or later.
 iosignal-cli runs an IOSignal server or an interactive client.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/docs/assets/iosignal-ecosystem.png" alt="Server, CLI, Node.js, Arduino and remote web apps connected through IOSignal" width="720" />
+  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/packages/iosignal-cli/docs/assets/iosignal-ecosystem.png" alt="Server, CLI, Node.js, Arduino and remote web apps connected through IOSignal" width="720" />
 </p>
 
 ## Installation
@@ -18,14 +18,16 @@ Requires Node.js 22.16.0 or later.
 npm install -g iosignal-cli
 ```
 
-For development from this repository:
+The [iosignal-cli repository](https://github.com/remocons/iosignal-cli) holds this package and [remocon](https://www.npmjs.com/package/remocon) (`packages/iosignal-cli`, `packages/remocon`). For development, run from the repository root:
 
 ```sh
 npm ci
 npm test
-node bin/io-server.js --help
-node bin/io-client.js --help
+node packages/iosignal-cli/bin/io-server.js --help
+node packages/iosignal-cli/bin/io-client.js --help
 ```
+
+Files both CLIs use (`ping.js`, `ping-line.js`, `log.js`) come from `shared/` at the root; `npm run sync:shared` copies them into each package's `lib/`, and `npm test` and publishing (`prepack`) do too.
 
 ### Upgrading from 8.x
 

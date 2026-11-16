@@ -7,7 +7,7 @@ remocon 패키지와 IOSignal 의존성의 버전은 **9.12.0**입니다. 9.12.0
 IOSignal 서버에 연결하여 단발 명령, 줄 단위 입력, 키 단위 입력, 대화형 명령을 실행합니다. Node.js 22.16.0 이상이 필요합니다.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/remocons/remocon/main/docs/assets/iosignal-ecosystem.png" alt="IOSignal로 연결되는 서버, CLI, Node.js, Arduino와 원격 제어 웹앱" width="720" />
+  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/packages/remocon/docs/assets/iosignal-ecosystem.png" alt="IOSignal로 연결되는 서버, CLI, Node.js, Arduino와 원격 제어 웹앱" width="720" />
 </p>
 
 ## 설치와 실행
@@ -24,12 +24,12 @@ npm install -g remocon
 npm install -g .
 ```
 
-저장소에서 직접 실행하거나 개발·테스트하려면:
+소스는 [iosignal-cli 저장소](https://github.com/remocons/iosignal-cli)의 `packages/remocon`에 있습니다(iosignal-cli와 함께). 저장소에서 직접 실행하거나 개발·테스트하려면 저장소 루트에서:
 
 ```sh
 npm ci
-node bin/remocon.js --help
-node bin/remocon.js -c ws://localhost:7777 pub demo hello
+node packages/remocon/bin/remocon.js --help
+node packages/remocon/bin/remocon.js -c ws://localhost:7777 pub demo hello
 npm test
 ```
 

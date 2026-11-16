@@ -4,8 +4,9 @@
 // traffic) are answered too, and are not shown.
 // Peer ping ('<cid>@ping' / '@pong', an application convention no library implements) was removed on
 // 2026-11-16: it answered whatever CID a message named, and showed anyone that a device was online.
-// Shared file: iosignal-cli/lib is the source. remocon/lib and remocon_kr/src/lib/cli keep identical
-// copies, and their tests compare them with this one (remocon: npm run sync:cli).
+// Shared file: shared/ in the iosignal-cli repository is the source. packages/iosignal-cli/lib,
+// packages/remocon/lib and remocon_kr/src/lib/cli keep identical copies (npm run sync:shared), and
+// tests compare them with it.
 export function createPingSession(io, { onPong, onTimeout, timeoutMs = 3000, pongCode = 0xCE }) {
   let pending = null; // { timer, at }
   let hasPongEvent = false;

@@ -31,12 +31,18 @@
   },
   "scripts": {
     "test": "node --test test/*.test.js",
-    "sync:cli": "node scripts/sync-cli.mjs"
+    "prepack": "node ../../scripts/sync-shared.mjs"
   },
   "files": [
     "bin/",
     "lib/",
     "README.md",
     "README.en.md"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/remocons/iosignal-cli.git",
+    "directory": "packages/remocon"
+  },
+  "homepage": "https://iosignal.net"
 }

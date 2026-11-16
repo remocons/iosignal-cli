@@ -2,8 +2,9 @@
 //   ⠋ ping …                                   while waiting (the mark turns)
 //   ✓ pong 23 ms                               the answer
 //   ✓ pong 21 ms · 6회 · 평균 23 ms  ▂▃▂▅▂▃     pings sent one after another keep updating the same line
-// Shared file: iosignal-cli/lib is the source. remocon/lib and remocon_kr/src/lib/cli keep identical
-// copies, and their tests compare them with this one (remocon: npm run sync:cli).
+// Shared file: shared/ in the iosignal-cli repository is the source. packages/iosignal-cli/lib,
+// packages/remocon/lib and remocon_kr/src/lib/cli keep identical copies (npm run sync:shared), and
+// tests compare them with it.
 const SPINNER = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
 const BARS = '▁▂▃▄▅▆▇█'
 const RECENT = 12
