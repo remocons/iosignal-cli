@@ -5,7 +5,7 @@ import readline from 'readline'
 import tty from 'tty'
 import { format } from 'node:util'
 import { formatLog } from '../lib/log.js'
-import { createPingSession } from '../lib/peer-ping.js'
+import { createPingSession } from '../lib/ping.js'
 import { createPingDisplay } from '../lib/ping-line.js'
 import { binarySize, formatPayload } from '../lib/cli.js'
 import { program } from 'commander'
@@ -179,7 +179,7 @@ if (options.id && options.key) {
 
 
 io.listen('@', (tag, ...args) => {
-  if (wsConsole.showIncommingMessage && !['@ping', '@pong'].includes(tag)) wsConsole.print(Console.Types.Incoming, `CID Message: ${tag} ${formatPayload(args)}`, Console.Colors.Green, 'incoming')
+  if (wsConsole.showIncommingMessage) wsConsole.print(Console.Types.Incoming, `CID Message: ${tag} ${formatPayload(args)}`, Console.Colors.Green, 'incoming')
 })
 
 
@@ -200,13 +200,13 @@ const pingDisplay = createPingDisplay({
   rewrite: (text, kind) => wsConsole.rewriteLast(text, kind),
   lines: () => wsConsole.lines,
 })
-const peerPings = createPingSession(io, {
+const pings = createPingSession(io, {
   onPong: (cid, ms) => pingDisplay.pong(cid, ms),
   onTimeout: (cid, ms) => pingDisplay.timeout(cid, ms)
 })
-process.once('exit', () => { pingDisplay.dispose(); peerPings.dispose() })
-// The target of a ping command, or null for any other line.
-const pingTarget = toks => ['ping', 'pping'].includes(toks[0]) && toks.length <= 2 ? toks[1] ?? '' : null
+process.once('exit', () => { pingDisplay.dispose(); pings.dispose() })
+// '' for a ping command (the server ping has no target), or null for any other line.
+const pingTarget = toks => toks[0] === 'ping' && toks.length === 1 ? '' : null
 
 io.on('ready', () => {
   // The name monitors show for this connection ('/iam <name>' still renames it until the next reconnect).
@@ -416,12 +416,10 @@ wsConsole.on('line', (data) => {
         io.unsubscribe(toks[1]);
         break;
 
-      case 'pping':
-        if (!toks[1]) throw new Error('Usage: pping <cid>')
       case 'ping':
-        if (toks.length > 2) throw new Error('Usage: ping [cid]')
-        peerPings.ping(toks[1])
-        pingDisplay.start(toks[1] ?? '')
+        if (toks.length > 1) throw new Error('Usage: ping (server ping; peer ping was removed)')
+        pings.ping()
+        pingDisplay.start('')
         break;
 
       case 'pong':

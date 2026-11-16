@@ -174,7 +174,7 @@ Interactive arguments are separated by whitespace; shell-style quoting is not in
 | `auth <id> <key>` / `login <id> <key>` | Configure automatic login / attempt login using the server's authentication challenge; a single `id.key` argument is also accepted |
 | `hide` / `show` | Hide / show received channel and direct messages; control and status messages remain visible |
 | `id` / `ch` / `quota` | Show the current connection (state, CID, authorization), subscriptions, or the applied quota |
-| `ping [cid]` / `pong` / `pping <cid>` | Ping the server without a CID, or a peer with a CID; `pping` is an alias |
+| `ping` / `pong` | Ping the server / send a protocol pong to the server |
 | `echo [text]` / `iam [name]` | Request an echo / query or set a nickname; text and name each use one token |
 | `encNo` / `encYes` / `encAuto` / `encMode` | Change / inspect the encryption mode |
 | `close` / `open [url]` / `connect [url]` | Close / reopen the connection; automatic reconnection may occur after `close` |
@@ -230,9 +230,7 @@ The interactive prompt uses `›` instead of the CID. Responses are indented, an
 Timestamps are hidden by default; enable them with `--timestamps`.
 Set `NO_COLOR=1` to disable colors. Piped output has no decorations or timestamps.
 
-`ping` requests a server response; `ping <cid>` requests a peer response. `pping <cid>` is an alias.
-The reply is one line: `⠋ ping …` turns while waiting, then the same line becomes `✓ pong 23 ms` (`✓ pong (<cid>) 23 ms` for a peer), or `✗ ping timeout · 3 s` after 3 seconds without one. The same ping entered again updates that line instead of adding one: `✓ pong 21 ms · 6회 · 평균 23 ms  ▂▃▂▅▂▃`. When the output is not a terminal, each reply is one `pong 23 ms` line. Replies to the client's own keep-alive pings are not shown. Disconnecting cancels pending requests.
-Peer requests use a direct `@ping` signal with one TEXT argument containing the sender CID. The responder sends `@pong` back with its own CID.
-CLI clients respond automatically, including when `hide` is enabled.
+`ping` requests a server response. Peer ping (`ping <cid>`, `pping`) was removed.
+The reply is one line: `⠋ ping …` turns while waiting, then the same line becomes `✓ pong 23 ms`, or `✗ ping timeout · 3 s` after 3 seconds without one. The same ping entered again updates that line instead of adding one: `✓ pong 21 ms · 6회 · 평균 23 ms  ▂▃▂▅▂▃`. When the output is not a terminal, each reply is one `pong 23 ms` line. Replies to the client's own keep-alive pings are not shown. Disconnecting cancels pending requests.
 The Node CLI handles both legacy WebSocket control PONG frames and IOSignal PONG packets.
 The browser CLI's default ping requires an IOSignal PONG packet from the server.
