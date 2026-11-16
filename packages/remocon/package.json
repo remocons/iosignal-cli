@@ -1,0 +1,42 @@
+{
+  "name": "remocon",
+  "version": "9.12.0",
+  "description": "IOSignal one-shot, line input, key input and interactive CLI",
+  "type": "module",
+  "bin": {
+    "remocon": "bin/remocon.js",
+    "remote": "bin/remote.js"
+  },
+  "author": {
+    "name": "Taeo Lee",
+    "email": "sixgen@gmail.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "commander": "13.1.0",
+    "iosignal": "^9.12.0"
+  },
+  "keywords": [
+    "websocket",
+    "pubsub",
+    "arduino",
+    "iot",
+    "auth",
+    "signal",
+    "CLI",
+    "remocon"
+  ],
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "sync:cli": "node scripts/sync-cli.mjs"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "README.md",
+    "README.en.md"
+  ]
+}
