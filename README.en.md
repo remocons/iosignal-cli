@@ -2,7 +2,7 @@
 
 [한국어](README.md) | [English](README.en.md)
 
-The remocon package and its IOSignal dependency use version **9.12.0**. 9.12.0 matches the IOSignal 9.12.0 release; the CLI names its connection with `iam('remocon-cli')` on every ready, so monitors show it. The CLI includes server and peer ping handling and improved interactive logs.
+The remocon package and its IOSignal dependency use version **9.12.0**. 9.12.0 matches the IOSignal 9.12.0 release; the CLI names its connection with `iam('remocon-cli')` on every ready, so monitors show it. The CLI includes server ping handling and improved interactive logs (peer ping is removed in the next release).
 
 Connect to an IOSignal server to run one-shot commands, line input, key input, or interactive commands. Requires Node.js 22.16.0 or later.
 
@@ -141,7 +141,7 @@ input demo
 | `sudo <command> [args...]` | Call the sudo service; server registration and permission required |
 | `auth` / `login <id> <key>` | Set credentials for the next connection / log in using the current server challenge; `id.key` is also supported |
 | `id` / `ch` / `quota` | Show connection / subscriptions / limits |
-| `ping` / `pong` / `pping <cid>` | Server ping/pong / peer CID ping |
+| `ping` / `pong` | Server ping/pong |
 | `echo [text]` / `iam [name]` | Echo / query or set a nickname; quote values containing spaces |
 | `encNo` / `encYes` / `encAuto` / `encMode` | Change / inspect encryption mode |
 | `hide` / `show` | Hide / show channel and direct-message output |
@@ -170,8 +170,7 @@ Automated tests and real PTY checks have verified immediate key sending and term
 The interactive prompt uses `›` instead of the CID. Responses are indented, and received messages, connection status, and errors are distinguished. Timestamps are hidden by default; enable them with `--timestamps`.
 Set `NO_COLOR=1` to disable colors. Piped output has no decorations or timestamps.
 
-`ping` requests a server response; `ping <cid>` requests a peer response. `pping <cid>` is an alias.
-The reply is one line: `⠋ ping …` turns while waiting, then the same line becomes `✓ pong 23 ms` (`✓ pong (<cid>) 23 ms` for a peer), or `✗ ping timeout · 3 s` after 3 seconds without one. The same ping entered again updates that line instead of adding one: `✓ pong 21 ms · 6회 · 평균 23 ms  ▂▃▂▅▂▃`. When the output is not a terminal, each reply is one `pong 23 ms` line. Replies to the client's own keep-alive pings are not shown.
-The CLI automatically responds to peer ping, including when `hide` is enabled.
+`ping` requests a server response. Peer ping (`ping <cid>`, `pping`) was removed.
+The reply is one line: `⠋ ping …` turns while waiting, then the same line becomes `✓ pong 23 ms`, or `✗ ping timeout · 3 s` after 3 seconds without one. The same ping entered again updates that line instead of adding one: `✓ pong 21 ms · 6회 · 평균 23 ms  ▂▃▂▅▂▃`. When the output is not a terminal, each reply is one `pong 23 ms` line. Replies to the client's own keep-alive pings are not shown.
 The Node CLI handles both legacy WebSocket control PONG frames and IOSignal PONG packets.
 The browser CLI's default ping requires an IOSignal PONG packet from the server.

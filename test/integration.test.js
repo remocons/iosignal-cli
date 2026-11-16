@@ -134,25 +134,13 @@ test('lost connection cancels the pending RPC timer', { timeout: 10000 }, async 
 })
 
 
-test('console server/peer ping and alias work while hidden; pipes stay plain', { timeout: 10000 }, async t => {
+test('console server ping works while hidden; ping <cid> and pping are refused; pipes stay plain', { timeout: 10000 }, async t => {
   const {url, tcp, subscriber} = await fixture(t)
   for (const address of [url, tcp]) {
     const child = launch(t, ['-c',address,'--timestamps','console'], `hide\nping\nping ${subscriber.io.cid}\npping ${subscriber.io.cid}\nquit\n`)
     assert.equal(await child.done, 0, child.text)
-    assert.equal(child.text.split(`pong (${subscriber.io.cid})`).length, 3)
     assert.match(child.text, /^pong \d+ ms$/m)
+    assert.doesNotMatch(child.text, new RegExp(`pong \\(${subscriber.io.cid.replace(/[?]/g, '\\?')}\\)`))
     assert.doesNotMatch(child.text, /\x1b|\d{2}:\d{2}:\d{2}|CID Message|ready:|›/)
   }
-})
-
-test('peer timeout is 3 seconds and disconnect cancels pending ping', { timeout: 6000 }, async t => {
-  const {url} = await fixture(t)
-  const client = new Session(opts(url));t.after(() => client.destroy());await client.connect()
-  const start = Date.now()
-  await assert.rejects(client.ping('missing'), /ping timeout \(missing\)/)
-  assert.ok(Date.now()-start >= 2900)
-  assert.equal(client.pingWaiters.size, 0)
-  const waiting = assert.rejects(client.ping('missing'), /연결이 종료/)
-  client.disconnect();await waiting
-  assert.equal(client.pending.size, 0)
 })

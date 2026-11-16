@@ -2,7 +2,7 @@
 
 [한국어](README.md) | [English](README.en.md)
 
-remocon 패키지와 IOSignal 의존성의 버전은 **9.12.0**입니다. 9.12.0은 IOSignal 9.12.0과 버전을 맞춘 릴리스로, 접속할 때마다 `iam('remocon-cli')`로 모니터에 보일 연결 이름을 알립니다. 서버·peer ping 처리와 대화형 로그 개선을 포함합니다.
+remocon 패키지와 IOSignal 의존성의 버전은 **9.12.0**입니다. 9.12.0은 IOSignal 9.12.0과 버전을 맞춘 릴리스로, 접속할 때마다 `iam('remocon-cli')`로 모니터에 보일 연결 이름을 알립니다. 서버 ping 처리와 대화형 로그 개선을 포함합니다(peer ping은 다음 릴리스에서 없앰).
 
 IOSignal 서버에 연결하여 단발 명령, 줄 단위 입력, 키 단위 입력, 대화형 명령을 실행합니다. Node.js 22.16.0 이상이 필요합니다.
 
@@ -141,7 +141,7 @@ input demo
 | `sudo <command> [args...]` | sudo 서비스 호출; 서버의 서비스 등록과 권한 필요 |
 | `auth` / `login <id> <key>` | 다음 연결용 인증 설정 / 현재 서버 challenge로 로그인; `id.key`도 지원 |
 | `id` / `ch` / `quota` | 연결 / 구독 / 제한 조회 |
-| `ping` / `pong` / `pping <cid>` | 서버 ping·pong / 상대 CID ping |
+| `ping` / `pong` | 서버 ping·pong |
 | `echo [text]` / `iam [name]` | echo / 별명 조회·설정; 공백 포함 값은 따옴표 사용 |
 | `encNo` / `encYes` / `encAuto` / `encMode` | 암호화 모드 변경 / 조회 |
 | `hide` / `show` | 일반 및 CID 수신 출력 숨김 / 표시 |
@@ -172,8 +172,7 @@ input demo
 연결 상태, 오류를 구분합니다. 시간은 기본적으로 숨기며 `--timestamps`로 표시합니다.
 `NO_COLOR=1`로 색상을 끌 수 있습니다. 파이프 출력에는 장식이나 시간이 추가되지 않습니다.
 
-`ping`은 서버에, `ping <cid>`는 상대 장치에 요청합니다. `pping <cid>`는 별칭입니다.
-응답은 한 줄로 표시합니다. 기다리는 동안 `⠋ ping …`이 돌다가 같은 자리에 `✓ pong 23 ms`(peer는 `✓ pong (<cid>) 23 ms`)로 바뀌고, 3초 동안 응답이 없으면 `✗ ping timeout · 3 s`로 바뀝니다. 같은 ping을 연달아 입력하면 줄을 늘리지 않고 `✓ pong 21 ms · 6회 · 평균 23 ms  ▂▃▂▅▂▃`처럼 그 줄을 갱신합니다. 출력이 터미널이 아니면 응답마다 `pong 23 ms` 한 줄을 씁니다. 클라이언트가 연결 유지를 위해 스스로 보내는 ping의 응답은 표시하지 않습니다.
-CLI는 수신한 peer ping에 자동 응답하며 `hide` 설정에도 응답합니다.
+`ping`은 서버에 응답을 요청합니다. 상대 장치에 보내던 peer ping(`ping <cid>`, `pping`)은 없앴습니다.
+응답은 한 줄로 표시합니다. 기다리는 동안 `⠋ ping …`이 돌다가 같은 자리에 `✓ pong 23 ms`로 바뀌고, 3초 동안 응답이 없으면 `✗ ping timeout · 3 s`로 바뀝니다. 같은 ping을 연달아 입력하면 줄을 늘리지 않고 `✓ pong 21 ms · 6회 · 평균 23 ms  ▂▃▂▅▂▃`처럼 그 줄을 갱신합니다. 출력이 터미널이 아니면 응답마다 `pong 23 ms` 한 줄을 씁니다. 클라이언트가 연결 유지를 위해 스스로 보내는 ping의 응답은 표시하지 않습니다.
 Node CLI는 기존 서버의 WebSocket 제어 PONG과 IOSignal PONG 패킷을 모두 처리합니다.
 브라우저 CLI의 기본 ping에는 서버의 IOSignal PONG 패킷 응답이 필요합니다.
