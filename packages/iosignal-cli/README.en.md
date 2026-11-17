@@ -2,7 +2,7 @@
 
 [한국어](README.md) | [English](README.en.md)
 
-The CLI package version is **9.12.0** and requires IOSignal **9.12.0** or later. 9.12.0 matches the IOSignal 9.12.0 release; the client names its connection with `iam('iosignal-cli')` on every ready, so monitors show it. Since 9.0.0, authentication levels are replaced by roles and quota profiles, and server output options were renamed. If you are coming from 8.x, see [Upgrading from 8.x](#upgrading-from-8x).
+The CLI package version is **9.19.0** and requires IOSignal **9.19.0** or later. 9.19.0 matches the IOSignal 9.19.0 release: `ping` is the server ping only (peer ping removed), a ping reply updates one line in place, and a message arriving while you type keeps the typed line. The client names its connection with `iam('iosignal-cli')` on every ready, so monitors show it. Since 9.0.0, authentication levels are replaced by roles and quota profiles, and server output options were renamed. If you are coming from 8.x, see [Upgrading from 8.x](#upgrading-from-8x).
 
 iosignal-cli runs an IOSignal server or an interactive client.
 
