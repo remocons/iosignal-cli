@@ -100,3 +100,16 @@ test('web and device options are checked before listening', { skip: !DEVICES && 
   assert.match(device.stderr, /no such file or folder/)
   for (const flag of ['-h', '--version']) assert.equal(run('io-device', [flag]).status, 0)
 })
+test('a port in use ends io-server with a plain message', async () => {
+  const net = await import('node:net')
+  const holder = net.createServer().listen(0) // every interface, as io-server listens
+  await new Promise(resolve => holder.once('listening', resolve))
+  try {
+    const result = run('io-server', ['-l', String(holder.address().port)])
+    assert.equal(result.status, 1, result.stderr)
+    assert.match(result.stderr, /port \d+ is already in use/)
+    assert.doesNotMatch(result.stderr, /Unhandled 'error' event/)
+  } finally {
+    holder.close()
+  }
+})

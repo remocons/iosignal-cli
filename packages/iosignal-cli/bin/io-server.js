@@ -178,6 +178,14 @@ try {
 
   if (options.attachServices?.includes('redis') && !redisClient) redisClient = await connectRedis();
   server = new Server( privateServerOptions , authManager);
+  // A port that cannot be opened (in use, no permission) ends the program with a plain message.
+  server.on('error', async error => {
+    console.error(`Error: ${error.code === 'EADDRINUSE' ? `port ${error.port ?? ''} is already in use` : error.message}`)
+    process.exitCode = 1
+    await devices?.close()
+    await closeRedis(redisClient)
+    process.exit()
+  })
   if (http) http.listen(parseInt(options.listen))
 
   if (options.attachServices && options.attachServices.length > 0) {
