@@ -2,7 +2,7 @@
 
 [한국어](README.md) | [English](README.en.md)
 
-The CLI package version is **9.19.0** and requires IOSignal **9.19.0** or later. 9.19.0 matches the IOSignal 9.19.0 release: `ping` is the server ping only (peer ping removed), a ping reply updates one line in place, and a message arriving while you type keeps the typed line. The client names its connection with `iam('iosignal-cli')` on every ready, so monitors show it. Since 9.0.0, authentication levels are replaced by roles and quota profiles, and server output options were renamed. If you are coming from 8.x, see [Upgrading from 8.x](#upgrading-from-8x).
+The CLI package version is **9.23.0** and uses IOSignal **9.23.0** or later. In 9.23.0 io-server serves, on the same port, a device control page (`--web`), your own pages (`--site`), virtual devices (`--devices`) and a dashboard (`--dashboard`), and there is a new `io-device` command ([Web pages and virtual devices](#web-pages-and-virtual-devices)). Since 9.0.0 authentication entries use a role and a quota profile instead of a level, and server output options were renamed. Coming from 8.x, see [Upgrading from 8.x](#upgrading-from-8x).
 
 iosignal-cli runs an IOSignal server or an interactive client.
 
@@ -215,6 +215,35 @@ The first three scripts write sample authentication data to Redis. The administr
 The multiple-device example takes `<base_id> [count] [quota]` and creates `device` entries such as `uno0` to `uno9`, each with a key identical to its ID. Without a quota, devices use `basic`.
 The administrator and multiple-device examples also call Redis `SAVE`. The server example uses WebSocket port 7777 by default.
 One-off examples close Redis connections when finished and exit with code 1 on error.
+
+## Web pages and virtual devices
+
+io-server also serves web pages on its WebSocket port (`-l`). The device screens and rules come from the iosignal package (`iosignal/devices`).
+
+```sh
+io-server -l 7777 -L 8888 --web                     # device control page at http://<host>:7777/
+io-server -l 7777 --web --site ./www                 # ./www served at /site/
+io-server -l 7777 --web --devices ./devices          # run virtual devices
+io-server -l 7777 --web --dashboard                  # server status page at /dashboard
+io-device ./devices -c wss://io.iosignal.net/ws      # virtual devices on another broker, no server
+```
+
+- **`-w, --web`:** a page at `/` that finds and controls the devices of its home channel (the same public IP; on a LAN, the whole LAN).
+  `--web-access members` makes the page ask for an ID and key before it connects (needs `-M`: the server keeps anonymous connections
+  out, so devices log in too). `/#<cid>` goes to that device's card.
+- **`--site <folder>`:** your own pages at `/site/` (`--home site` sends `/` there). They use `/components/` (the panel
+  `<iosignal-devices>`, the card `<iosignal-device-card cid="...">`), `/shared/` (device rules), `/types/` (official types) and
+  `/lib/io.js` (the browser client). `--cors` lets pages on other sites load them.
+- **`--devices <path...>`:** each `*.device.js` / `*.device.json` file is one virtual device (one process). They connect over loopback,
+  so they are in the LAN home channel. A changed file restarts its device (`--no-devices-watch` turns that off); an invalid file waits
+  for a fix. Device code runs with io-server's rights: run only files you trust. Format: `io-device --help`; examples:
+  `iosignal/devices/examples`.
+- **`--dashboard [path]`:** the server status page (default `/dashboard`). `--dashboard-access`: `open` (default, for a LAN), `admin`
+  (an admin account logs in), `token` (`IOSIGNAL_DASHBOARD_TOKEN`) or `token:<value>`. With `--devices` it lists the virtual devices.
+- **`--trust-proxy`:** when `X-Forwarded-For` sets a client's address (and so its home channel): `private` (default: a proxy on the
+  same host or a private network), `always`, `never`, or a number of proxy hops.
+- `GET /healthz` answers `{"status":"ok"}` (for container health checks). A port already in use ends io-server with
+  `port N is already in use`.
 
 ## Tests
 

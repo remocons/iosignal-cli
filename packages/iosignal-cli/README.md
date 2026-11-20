@@ -2,7 +2,7 @@
 
 [한국어](README.md) | [English](README.en.md)
 
-CLI 패키지 버전은 **9.19.0**이며, IOSignal **9.19.0** 이상을 사용합니다. 9.19.0은 IOSignal 9.19.0과 버전을 맞춘 릴리스로, `ping`은 서버 ping만 쓰고(peer ping 없앰) 응답을 한 줄에서 갱신하며, 입력 중에 메시지가 와도 입력하던 줄이 유지됩니다. 클라이언트는 접속할 때마다 `iam('iosignal-cli')`로 모니터에 보일 연결 이름을 알립니다. 9.0.0부터 인증 항목의 레벨이 역할(role)과 쿼터 프로필(quota)로 바뀌었고, 서버 출력 옵션 이름이 바뀌었습니다. 8.x에서 올라온다면 [8.x에서 업그레이드](#8x에서-업그레이드)를 확인하세요.
+CLI 패키지 버전은 **9.23.0**이며, IOSignal **9.23.0** 이상을 사용합니다. 9.23.0에서 io-server는 같은 포트로 장치 제어 페이지(`--web`), 직접 만든 페이지(`--site`), 가상 장치(`--devices`), 대시보드(`--dashboard`)를 함께 제공하고, `io-device` 명령이 생겼습니다([웹 페이지와 가상 장치](#웹-페이지와-가상-장치)). 9.0.0부터 인증 항목의 레벨이 역할(role)과 쿼터 프로필(quota)로 바뀌었고, 서버 출력 옵션 이름이 바뀌었습니다. 8.x에서 올라온다면 [8.x에서 업그레이드](#8x에서-업그레이드)를 확인하세요.
 
 iosignal-cli는 IOSignal 서버와 대화형 클라이언트를 실행하는 CLI입니다.
 
@@ -216,6 +216,32 @@ node test_auth_redis/server-auth-redis.js
 다중 장치 예제는 `<base_id> [count] [quota]`를 받아 `uno0`~`uno9`처럼 ID와 같은 키를 가진 `device` 역할 항목을 만듭니다. quota를 생략하면 `basic`입니다.
 관리자·다중 장치 예제는 Redis `SAVE`도 호출합니다. 서버 예제의 기본 WebSocket 포트는 7777입니다.
 단발성 예제는 작업 완료 후 Redis 연결을 닫고, 오류가 발생하면 종료 코드 1을 반환합니다.
+
+## 웹 페이지와 가상 장치
+
+io-server는 WebSocket 포트(`-l`)에서 웹 페이지도 제공합니다. 장치 화면과 규칙은 iosignal 패키지의 `iosignal/devices`에서 옵니다.
+
+```sh
+io-server -l 7777 -L 8888 --web                     # http://<주소>:7777/ 장치 제어 페이지
+io-server -l 7777 --web --site ./www                 # ./www를 /site/로 제공
+io-server -l 7777 --web --devices ./devices          # 가상 장치 실행
+io-server -l 7777 --web --dashboard                  # /dashboard 서버 상태 페이지
+io-device ./devices -c wss://io.iosignal.net/ws      # 서버 없이 다른 브로커에 가상 장치만
+```
+
+- **`-w, --web`:** `/`에 같은 홈채널(같은 공인 IP, LAN이면 LAN 전체)의 장치를 찾아 제어하는 페이지. `--web-access members`는 페이지가
+  ID와 키를 받은 뒤 접속합니다(`-M` 필요: 서버가 익명 연결을 막고, 장치도 로그인해야 합니다). `/#<cid>`는 그 장치 카드로 이동합니다.
+- **`--site <폴더>`:** 직접 만든 페이지를 `/site/`로 제공합니다(`--home site`면 `/`가 이리로 이동). 페이지는 `/components/`(장치 패널
+  `<iosignal-devices>`, 카드 `<iosignal-device-card cid="...">`), `/shared/`(장치 규칙), `/types/`(공식 타입), `/lib/io.js`(브라우저
+  클라이언트)를 씁니다. 다른 사이트의 페이지가 이 파일을 불러오려면 `--cors`.
+- **`--devices <경로...>`:** `*.device.js` / `*.device.json` 파일 하나가 가상 장치 하나(프로세스 하나)입니다. 루프백으로 접속하므로
+  LAN 홈채널에 보입니다. 파일을 고치면 다시 시작하며(`--no-devices-watch`로 끔), 잘못된 파일은 고칠 때까지 기다립니다. 장치 코드는
+  io-server와 같은 권한으로 실행되니 믿을 수 있는 파일만 쓰세요. 형식은 `io-device --help`, 예제는 `iosignal/devices/examples`.
+- **`--dashboard [경로]`:** 서버 상태 페이지(기본 `/dashboard`). `--dashboard-access`는 `open`(기본, LAN용), `admin`(admin 계정 로그인),
+  `token`(`IOSIGNAL_DASHBOARD_TOKEN`) 또는 `token:<값>`. `--devices`를 쓰면 가상 장치 표가 함께 나옵니다.
+- **`--trust-proxy`:** 접속 주소(그리고 홈채널)를 정할 때 `X-Forwarded-For`를 믿을지: `private`(기본, 같은 호스트·사설망의 프록시),
+  `always`, `never`, 또는 프록시 단계 수.
+- `GET /healthz`는 `{"status":"ok"}`로 답합니다(컨테이너 헬스체크용). 포트가 이미 쓰이면 `port N is already in use`를 출력하고 끝납니다.
 
 ## 테스트
 
