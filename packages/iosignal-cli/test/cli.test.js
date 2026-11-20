@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { port, heartbeatInterval, logStats, binarySize, formatPayload, trustProxy, dashboardPath, dashboardAccess } from '../lib/cli.js'
 import { redisOptions } from '../lib/redis.js'
+import { DEVICES } from '../lib/web.js'
 
 const run = (file, args) => spawnSync(process.execPath, [`bin/${file}.js`, ...args], { encoding: 'utf8', timeout: 5000 })
 test('CLI help and version load with installed iosignal', () => {
@@ -78,4 +79,24 @@ test('dashboard options need a WebSocket port and each other', () => {
     assert.equal(result.status, 1, result.stderr)
     assert.match(result.stderr, pattern)
   }
+})
+test('web and device options are checked before listening', { skip: !DEVICES && 'needs iosignal/devices' }, () => {
+  for (const [args, pattern] of [
+    [['-L', '0', '--web'], /need --listen/],
+    [['-l', '0', '--web-access', 'members'], /--web-access needs --web/],
+    [['-l', '0', '--web', '--web-access', 'members'], /needs --members-only/],
+    [['-l', '0', '--web', '--web-access', 'all'], /home or members/],
+    [['-l', '0', '--web', '--home', 'site'], /--home site needs --site/],
+    [['-l', '0', '--cors'], /--cors needs --web or --site/],
+    [['-l', '0', '--site', '/no/such/folder'], /not a folder/],
+    [['-l', '0', '--devices', '/no/such/folder'], /no such file or folder/],
+  ]) {
+    const result = run('io-server', args)
+    assert.equal(result.status, 1, `${args.join(' ')}: ${result.stderr}`)
+    assert.match(result.stderr, pattern)
+  }
+  const device = run('io-device', ['/no/such/folder'])
+  assert.equal(device.status, 1)
+  assert.match(device.stderr, /no such file or folder/)
+  for (const flag of ['-h', '--version']) assert.equal(run('io-device', [flag]).status, 0)
 })

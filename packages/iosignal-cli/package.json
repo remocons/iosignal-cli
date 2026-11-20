@@ -10,7 +10,8 @@
     "ios": "bin/io-server.js",
     "io": "bin/io-client.js",
     "ioip": "bin/ioip.js",
-    "io-keygen": "bin/io-keygen.js"
+    "io-keygen": "bin/io-keygen.js",
+    "io-device": "bin/io-device.js"
   },
   "author": {
     "name": "Taeo Lee",

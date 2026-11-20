@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { IO } from 'iosignal'
+import { DEVICES } from '../lib/web.js'
 
 function launch(args, env = {}) {
   const child = spawn(process.execPath, args, { env: { ...process.env, ...env }, stdio: ['pipe', 'pipe', 'pipe'] })
@@ -243,4 +244,63 @@ test('real CLI serves the dashboard on its WebSocket port and hides the token', 
   client.autoReconnect = false
   t.after(() => client.destroy())
   await until(() => client.stateName === 'ready')
+})
+
+test('real CLI runs virtual devices: found by #search, an invalid file waits for a fix, watch restarts', { timeout: 30000, skip: !DEVICES && 'needs iosignal/devices' }, async t => {
+  const fs = await import('node:fs')
+  const os = await import('node:os')
+  const path = await import('node:path')
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'io-devices-'))
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }))
+  fs.writeFileSync(path.join(dir, 'lamp.device.json'), JSON.stringify({ name: '시험 조명:시험', type: 'light.1', state: { on: '0' } }))
+  fs.writeFileSync(path.join(dir, 'bad.device.json'), JSON.stringify({ state: { on: '0' } }))
+  const server = launch(['bin/io-server.js', '-l', '0', '--web', '--devices', dir])
+  t.after(() => stop(server))
+  await until(() => /\[lamp\] ready cid: (\S+)/.test(server.output), server)
+  await until(() => /\[bad\] stopped: name is required/.test(server.output), server)
+  await until(() => /ws:\/\/localhost:\d+/.test(server.output), server)
+  const url = server.output.match(/ws:\/\/localhost:\d+/)[0]
+  const cid = server.output.match(/\[lamp\] ready cid: (\S+)/)[1]
+
+  const app = new IO(url)
+  app.autoReconnect = false
+  t.after(() => app.destroy())
+  const found = new Set()
+  app.listen('#notify', (_tag, id) => found.add(id))
+  const states = []
+  app.listen(`${cid}@$state`, (_tag, value) => states.push(value))
+  await until(() => app.stateName === 'ready')
+  app.signal('#search')
+  await until(() => found.has(cid))
+  app.signal(`${cid}@`, 'on')
+  await until(() => states.includes('on=1'))
+
+  fs.writeFileSync(path.join(dir, 'bad.device.json'), JSON.stringify({ name: '고친 장치', ui: 'go' }))
+  await until(() => /\[bad\] ready cid:/.test(server.output), server)
+  fs.rmSync(path.join(dir, 'lamp.device.json'))
+  await until(() => /\[lamp\] removed/.test(server.output), server)
+})
+
+const { Server } = await import('iosignal')
+const newLibrary = typeof Server.prototype.handle === 'function'
+test('with --web the dashboard links to the pages, lists virtual devices; /healthz answers', { timeout: 20000, skip: !newLibrary && 'needs iosignal with server.handle() (after 9.22.0)' }, async t => {
+  const server = launch(['bin/io-server.js', '-l', '0', '--web', '--dashboard', '--devices', `${DEVICES}/examples/lamp.device.js`])
+  t.after(() => stop(server))
+  await until(() => /http:\/\/localhost:\d+\/dashboard/.test(server.output) && /\[lamp\] ready/.test(server.output), server)
+  const base = server.output.match(/http:\/\/localhost:\d+/)[0]
+  assert.deepEqual(await (await fetch(`${base}/healthz`)).json(), { status: 'ok' })
+  assert.equal((await fetch(`${base}/`)).status, 200)
+  const viewer = new IO(base.replace('http', 'ws'))
+  viewer.autoReconnect = false
+  t.after(() => viewer.destroy())
+  const got = []
+  viewer.on('@iosignal.dashboard', (_tag, m) => got.push(m))
+  await until(() => viewer.stateName === 'ready')
+  viewer.signal('iosignal.dashboard#in', { op: 'hello' })
+  await until(() => got.some(m => m.type === 'tick'))
+  const init = got.find(m => m.type === 'init')
+  assert.deepEqual(init.links, [{ label: '장치', href: '/' }])
+  assert.equal(init.custom[0].id, 'devices')
+  const tick = got.find(m => m.type === 'tick')
+  assert.equal(tick.custom.devices[0][0], 'lamp')
 })

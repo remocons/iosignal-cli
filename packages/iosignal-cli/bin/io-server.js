@@ -2,9 +2,12 @@
 
 import { connectRedis, closeRedis } from '../lib/redis.js'
 import { port, heartbeatInterval, logStats, trustProxy, dashboardPath, dashboardAccess } from '../lib/cli.js'
-import { program } from 'commander'
+import { program, InvalidArgumentError } from 'commander'
 import { serverHelp } from '../lib/help.js'
 import { serverInfo } from './serverInfo.js';
+import { createServer as createHttpServer } from 'node:http'
+import { createWebHandler, DEVICES, DEVICES_MISSING } from '../lib/web.js'
+import { createDevices, deviceFiles } from '../lib/devices.js'
 import {
   Server, serverOption, replyService, sudoService, RedisService, version as iosignal_version,
   BohoAuth, FileKeyProvider, StringKeyProvider, RedisKeyProvider
@@ -36,10 +39,26 @@ program
   .option('--dashboard [path]', 'serve the live status page on the WebSocket port (default path: /dashboard)', dashboardPath)
   .option('--dashboard-access <mode>', 'who may view the dashboard: open (default), admin, token (IOSIGNAL_DASHBOARD_TOKEN) or token:<value>', value => dashboardAccess(value))
   .option('--trust-proxy <mode>', 'use X-Forwarded-For from: private peers (default), always, never, or <hops>', trustProxy)
+  .option('-w, --web', 'serve the device control page at / on the WebSocket port')
+  .option('--web-access <mode>', 'home (default: devices in the home channel) or members (the page asks for an ID and key; needs -M)', webAccess)
+  .option('--site <folder>', 'serve your own pages from this folder at /site/')
+  .option('--home <page>', 'what / shows: panel (default, with --web) or site', homePage)
+  .option('--cors', 'let pages on other sites load /components/, /shared/, /types/ and /lib/io.js')
+  .option('--devices <path...>', 'run virtual devices: *.device.js / *.device.json files or folders of them')
+  .option('--no-devices-watch', 'do not restart devices when their files change (watched by default)')
   .option('-o, --show-options', 'print initialization options and attached service names')
   .addHelpText('after', serverHelp)
   .showHelpAfterError('Use --help for options and examples.')
   .parse(process.argv)
+
+function webAccess(value) {
+  if (value !== 'home' && value !== 'members') throw new InvalidArgumentError('use home or members')
+  return value
+}
+function homePage(value) {
+  if (value !== 'panel' && value !== 'site') throw new InvalidArgumentError('use panel or site')
+  return value
+}
 
 const options = program.opts()
 if (options.listen === undefined && options.listenCongport === undefined) {
@@ -52,6 +71,22 @@ if ((options.idKey || options.sharedKey !== undefined) && authOptions.length > 1
 if (options.sharedKey === '') program.error('--shared-key needs a non-empty key')
 if (options.dashboardAccess !== undefined && options.dashboard === undefined) program.error('--dashboard-access needs --dashboard')
 if (options.dashboard !== undefined && options.listen === undefined) program.error('--dashboard needs --listen <port>: it is served on the WebSocket port')
+const pages = options.web || options.site !== undefined
+if (pages && options.listen === undefined) program.error('--web and --site need --listen <port>: they are served on the WebSocket port')
+if (options.webAccess !== undefined && !options.web) program.error('--web-access needs --web')
+if (options.webAccess === 'members' && !options.membersOnly) {
+  program.error('--web-access members needs --members-only (-M): the server, not the page, keeps anonymous connections out; devices then log in too')
+}
+if (options.home === 'site' && options.site === undefined) program.error('--home site needs --site <folder>')
+if (options.cors && !pages) program.error('--cors needs --web or --site')
+if ((pages || options.devices) && !DEVICES) program.error(`--web, --site and --devices ${DEVICES_MISSING}`)
+let devicePaths = []
+if (options.devices) {
+  try { devicePaths = deviceFiles(options.devices) } catch (error) { program.error(`--devices: ${error.message}`) }
+  if (!devicePaths.length) console.warn('--devices: no *.device.js or *.device.json files found (yet)')
+}
+// iosignal with server.handle() also has dashboard links and panels (the release after 9.22.0).
+const newDashboard = typeof Server.prototype.handle === 'function'
 
 // global shared serverOption
 if (options.fileLogger) {
@@ -82,10 +117,36 @@ let dashboardLabel = null;
 if (options.dashboard !== undefined) {
   const access = options.dashboardAccess ?? 'open'
   privateServerOptions.dashboard = { access, ...(options.dashboard === true ? {} : { path: options.dashboard }) }
+  if (newDashboard && pages) {
+    privateServerOptions.dashboard.links = [
+      ...(options.web ? [{ label: '장치', href: '/' }] : []), ...(options.site !== undefined ? [{ label: '사이트', href: '/site/' }] : []),
+    ]
+    if (options.web) privateServerOptions.dashboard.cidHref = '/#{cid}'
+  }
   dashboardLabel = access === 'open' ? 'open (anyone who can reach this port)'
     : access.token ? 'token' : 'admin login'
 }
-if (options.listen !== undefined) {
+let http = null;
+let web = null;
+if (pages) {
+  // Pages share the WebSocket port: this HTTP server answers them, and the IOSignal server its upgrades,
+  // health check and dashboard.
+  const dashboardHref = options.dashboard === undefined ? null : (options.dashboard === true ? '/dashboard' : options.dashboard)
+  try {
+    web = createWebHandler({
+      web: Boolean(options.web), login: options.webAccess === 'members', site: options.site ?? null,
+      home: options.home ?? 'panel', cors: Boolean(options.cors),
+      links: [...(options.site !== undefined ? [{ label: '사이트', href: '/site/' }] : []), ...(dashboardHref ? [{ label: '대시보드', href: dashboardHref }] : [])],
+    })
+  } catch (error) { program.error(error.message) }
+  http = createHttpServer((req, res) => {
+    if (server?.handle ? server.handle(req, res) : server?.dashboard?.handle(req, res)) return
+    if (web(req, res)) return
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' })
+    res.end('Not found')
+  })
+  privateServerOptions.httpServer = http
+} else if (options.listen !== undefined) {
   privateServerOptions.port = parseInt(options.listen)
 }
 
@@ -117,6 +178,7 @@ try {
 
   if (options.attachServices?.includes('redis') && !redisClient) redisClient = await connectRedis();
   server = new Server( privateServerOptions , authManager);
+  if (http) http.listen(parseInt(options.listen))
 
   if (options.attachServices && options.attachServices.length > 0) {
     let attachServices = options.attachServices
@@ -141,8 +203,11 @@ try {
     console.log('server serviceNames:', server.serviceNames)
   }
 
+  if (options.devices) server.once('ready', startDevices)
+
   setTimeout(async ()=>{
-    console.log(serverInfo(server, authLabel && (options.membersOnly ? `${authLabel}, members only` : authLabel), dashboardLabel))
+    console.log(serverInfo(server, authLabel && (options.membersOnly ? `${authLabel}, members only` : authLabel), dashboardLabel,
+      { web: Boolean(options.web), site: options.site ?? null, devices: options.devices ? devicePaths.length : null }))
     if (server.dashboard && options.dashboardAccess?.login && !authManager && !privateServerOptions.localAuth) {
       console.warn('dashboard: admin access needs an authentication option (-d, -e, -r); nobody can log in now')
     }
@@ -155,13 +220,31 @@ try {
   await closeRedis(redisClient);
   process.exitCode = 1;
 }
+
+let devices = null;
+// Virtual devices connect to this server over loopback, so they are in the LAN home channel.
+function startDevices() {
+  const url = options.listen !== undefined ? `ws://127.0.0.1:${server.port}` : `cong://127.0.0.1:${server.congPort}`
+  devices = createDevices({ targets: options.devices, url, watch: options.devicesWatch !== false })
+  if (options.membersOnly) console.warn('devices: with --members-only, a device needs auth (id.key) in its file to be seen')
+  server.dashboard?.panel?.('devices', {
+    title: '가상 장치', columns: ['파일', '상태', 'CID', '재시작', '오류'],
+    rows: () => devices.list().map(d => [d.name, d.state, d.cid, d.restarts, d.error]),
+  })
+}
+
 let stopping = false;
 async function shutdown() {
   if (stopping) return;
   stopping = true;
+  await devices?.close();
   if (server?.manager) {
     if (typeof server.wss?.close !== 'function') server.wss = null;
     await new Promise(resolve => server.close(resolve));
+  }
+  if (http) {
+    http.closeAllConnections?.();
+    await new Promise(resolve => http.close(() => resolve()));
   }
   await closeRedis(redisClient);
 }

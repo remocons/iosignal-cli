@@ -20,8 +20,9 @@ export function getNetworkAddress (){
 /**
  * @param {string|null} [auth] authentication shown in the box, e.g. 'local test: key = ID'
  * @param {string|null} [dashboard] dashboard access shown in the box when the dashboard is on
+ * @param {{ web?: boolean, site?: string|null, devices?: number|null }} [pages] web pages and virtual devices
  */
-export function serverInfo ( server, auth = null, dashboard = null ){
+export function serverInfo ( server, auth = null, dashboard = null, pages = {} ){
 
     let ip = getNetworkAddress();
     let message
@@ -65,6 +66,19 @@ export function serverInfo ( server, auth = null, dashboard = null ){
         message += `\n ${chalk.bold(`${prefix}host:`)} ${ip}`;
         message += `\n ${chalk.bold('- port:')} ${server.congPort }`;
 
+    }
+
+    if (pages.web || pages.site) {
+      message += `\n\n`;
+      message += chalk.green('Web');
+      if (pages.web) message += `\n ${chalk.bold('- Devices:')}  http://${ip}:${server.port}/`;
+      if (pages.site) message += `\n ${chalk.bold('- Site:')}     http://${ip}:${server.port}/site/  (${pages.site})`;
+    }
+
+    if (pages.devices !== null && pages.devices !== undefined) {
+      message += `\n\n`;
+      message += chalk.green('Virtual devices');
+      message += `\n ${chalk.bold(prefix)}${pages.devices} file${pages.devices === 1 ? '' : 's'}`;
     }
 
     if (server.dashboard) {
