@@ -17,8 +17,11 @@ export function getNetworkAddress (){
   };
 
 
-/** @param {string|null} [auth] authentication shown in the box, e.g. 'local test: key = ID' */
-export function serverInfo ( server, auth = null ){
+/**
+ * @param {string|null} [auth] authentication shown in the box, e.g. 'local test: key = ID'
+ * @param {string|null} [dashboard] dashboard access shown in the box when the dashboard is on
+ */
+export function serverInfo ( server, auth = null, dashboard = null ){
 
     let ip = getNetworkAddress();
     let message
@@ -62,6 +65,15 @@ export function serverInfo ( server, auth = null ){
         message += `\n ${chalk.bold(`${prefix}host:`)} ${ip}`;
         message += `\n ${chalk.bold('- port:')} ${server.congPort }`;
 
+    }
+
+    if (server.dashboard) {
+      const path = server.dashboard.path
+      message += `\n\n`;
+      message += chalk.green('Dashboard');
+      message += `\n ${chalk.bold(`${prefix}Local:`)}${space}http://localhost:${server.port}${path}`;
+      message += `\n ${chalk.bold('- Network:')}  http://${ip}:${server.port}${path}`;
+      if (dashboard) message += `\n ${chalk.bold(prefix)}access: ${dashboard}`;
     }
 
     if (auth) {

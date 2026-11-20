@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { connectRedis, closeRedis } from '../lib/redis.js'
-import { port, heartbeatInterval, logStats } from '../lib/cli.js'
+import { port, heartbeatInterval, logStats, trustProxy, dashboardPath, dashboardAccess } from '../lib/cli.js'
 import { program } from 'commander'
 import { serverHelp } from '../lib/help.js'
 import { serverInfo } from './serverInfo.js';
@@ -33,6 +33,9 @@ program
   .option('-q, --anonymous-quota <profile>', 'quota profile of unauthenticated connections: anonymous (default), basic, pro, unlimited')
   .option('-f, --file-logger', 'write connection.log, auth.log and attack.log in the working directory')
   .option('-a, --attach-services [list...]', 'built-in services: reply sudo redis (space-separated; none by default)')
+  .option('--dashboard [path]', 'serve the live status page on the WebSocket port (default path: /dashboard)', dashboardPath)
+  .option('--dashboard-access <mode>', 'who may view the dashboard: open (default), admin, token (IOSIGNAL_DASHBOARD_TOKEN) or token:<value>', value => dashboardAccess(value))
+  .option('--trust-proxy <mode>', 'use X-Forwarded-For from: private peers (default), always, never, or <hops>', trustProxy)
   .option('-o, --show-options', 'print initialization options and attached service names')
   .addHelpText('after', serverHelp)
   .showHelpAfterError('Use --help for options and examples.')
@@ -47,6 +50,8 @@ if ((options.idKey || options.sharedKey !== undefined) && authOptions.length > 1
   program.error('--id-key and --shared-key cannot be combined with each other or with another authentication option')
 }
 if (options.sharedKey === '') program.error('--shared-key needs a non-empty key')
+if (options.dashboardAccess !== undefined && options.dashboard === undefined) program.error('--dashboard-access needs --dashboard')
+if (options.dashboard !== undefined && options.listen === undefined) program.error('--dashboard needs --listen <port>: it is served on the WebSocket port')
 
 // global shared serverOption
 if (options.fileLogger) {
@@ -71,6 +76,14 @@ if (options.idKey) {
 }
 if (options.membersOnly) {
   privateServerOptions.membersOnly = true
+}
+if (options.trustProxy !== undefined) privateServerOptions.trustProxy = options.trustProxy
+let dashboardLabel = null;
+if (options.dashboard !== undefined) {
+  const access = options.dashboardAccess ?? 'open'
+  privateServerOptions.dashboard = { access, ...(options.dashboard === true ? {} : { path: options.dashboard }) }
+  dashboardLabel = access === 'open' ? 'open (anyone who can reach this port)'
+    : access.token ? 'token' : 'admin login'
 }
 if (options.listen !== undefined) {
   privateServerOptions.port = parseInt(options.listen)
@@ -121,14 +134,18 @@ try {
 
   if (options.showOptions) {
     console.log('global ServerOptions:', serverOption)
-    console.log('private ServerOptions:', privateServerOptions.localAuth?.key
-      ? { ...privateServerOptions, localAuth: { ...privateServerOptions.localAuth, key: '(hidden)' } }
-      : privateServerOptions)
+    const shown = { ...privateServerOptions }
+    if (shown.localAuth?.key) shown.localAuth = { ...shown.localAuth, key: '(hidden)' }
+    if (shown.dashboard?.access?.token) shown.dashboard = { ...shown.dashboard, access: { token: '(hidden)' } }
+    console.log('private ServerOptions:', shown)
     console.log('server serviceNames:', server.serviceNames)
   }
 
   setTimeout(async ()=>{
-    console.log(serverInfo(server, authLabel && (options.membersOnly ? `${authLabel}, members only` : authLabel)))
+    console.log(serverInfo(server, authLabel && (options.membersOnly ? `${authLabel}, members only` : authLabel), dashboardLabel))
+    if (server.dashboard && options.dashboardAccess?.login && !authManager && !privateServerOptions.localAuth) {
+      console.warn('dashboard: admin access needs an authentication option (-d, -e, -r); nobody can log in now')
+    }
     if ( server.port === null && server.congPort === null ) {
       await closeRedis(redisClient);
     }

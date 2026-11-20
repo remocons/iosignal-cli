@@ -13,3 +13,35 @@ export const heartbeatInterval = value => integer(value, 'heartbeat interval', 1
 export const logStats = value => value === '0' ? 0 : integer(value, 'log stats interval', 1000, 2147483647)
 export const binarySize = value => integer(value, 'size', 0, 1024 * 1024)
 export const formatPayload = args => args.map(value => typeof value === 'string' ? value : inspect(value, { colors: false, depth: 6, breakLength: Infinity })).join(' ')
+
+// --trust-proxy: when X-Forwarded-For / -Proto decide a client's address (and so its home channel).
+export function trustProxy(value) {
+  const modes = { private: 'private', always: true, never: false }
+  if (Object.hasOwn(modes, value)) return modes[value]
+  if (/^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= 32) return Number(value)
+  throw new InvalidArgumentError('use private, always, never or a number of proxy hops (1..32)')
+}
+
+export function dashboardPath(value) {
+  if (!/^\/[A-Za-z0-9._~\-/]*$/.test(value) || value.length > 64) {
+    throw new InvalidArgumentError("a path that starts with '/' and uses URL-safe characters (at most 64)")
+  }
+  return value
+}
+
+// --dashboard-access: open | admin | token | token:<value>. A bare 'token' reads IOSIGNAL_DASHBOARD_TOKEN,
+// which keeps the token out of the process list and `docker inspect`.
+export function dashboardAccess(value, env = process.env) {
+  if (value === 'open') return 'open'
+  if (value === 'admin') return { login: { roles: ['admin'] } }
+  if (value === 'token' || value.startsWith('token:')) {
+    const token = value === 'token' ? env.IOSIGNAL_DASHBOARD_TOKEN : value.slice('token:'.length)
+    if (!token || token.length < 8) {
+      throw new InvalidArgumentError(value === 'token'
+        ? 'set IOSIGNAL_DASHBOARD_TOKEN to a token of at least 8 characters'
+        : 'the token needs at least 8 characters')
+    }
+    return { token }
+  }
+  throw new InvalidArgumentError('use open, admin, token (IOSIGNAL_DASHBOARD_TOKEN) or token:<value>')
+}

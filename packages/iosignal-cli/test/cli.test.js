@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { port, heartbeatInterval, logStats, binarySize, formatPayload } from '../lib/cli.js'
+import { port, heartbeatInterval, logStats, binarySize, formatPayload, trustProxy, dashboardPath, dashboardAccess } from '../lib/cli.js'
 import { redisOptions } from '../lib/redis.js'
 
 const run = (file, args) => spawnSync(process.execPath, [`bin/${file}.js`, ...args], { encoding: 'utf8', timeout: 5000 })
@@ -53,4 +53,29 @@ test('Redis environment is applied and invalid ports fail early', () => {
   assert.equal(options.socket.host, 'redis.internal')
   assert.equal(options.socket.port, 6380)
   for (const value of ['0','65536','123x']) assert.throws(() => redisOptions({ REDIS_PORT: value }))
+})
+test('trust-proxy, dashboard path and dashboard access parse or fail clearly', () => {
+  assert.deepEqual(['private', 'always', 'never', '2'].map(trustProxy), ['private', true, false, 2])
+  for (const bad of ['yes', '0', '33', '1.5', '']) assert.throws(() => trustProxy(bad), /private, always, never/)
+  assert.equal(dashboardPath('/ops/status'), '/ops/status')
+  for (const bad of ['dashboard', '/a b', '/' + 'x'.repeat(64)]) assert.throws(() => dashboardPath(bad), /URL-safe/)
+  assert.equal(dashboardAccess('open'), 'open')
+  assert.deepEqual(dashboardAccess('admin'), { login: { roles: ['admin'] } })
+  assert.deepEqual(dashboardAccess('token:secret-1234'), { token: 'secret-1234' })
+  assert.deepEqual(dashboardAccess('token', { IOSIGNAL_DASHBOARD_TOKEN: 'from-env-123' }), { token: 'from-env-123' })
+  assert.throws(() => dashboardAccess('token', {}), /IOSIGNAL_DASHBOARD_TOKEN/)
+  assert.throws(() => dashboardAccess('token:short'), /8 characters/)
+  assert.throws(() => dashboardAccess('everyone'), /open, admin/)
+})
+test('dashboard options need a WebSocket port and each other', () => {
+  for (const [args, pattern] of [
+    [['-L', '0', '--dashboard'], /--dashboard needs --listen/],
+    [['-l', '0', '--dashboard-access', 'open'], /--dashboard-access needs --dashboard/],
+    [['-l', '0', '--dashboard', 'nope'], /URL-safe/],
+    [['-l', '0', '--trust-proxy', 'maybe'], /private, always, never/],
+  ]) {
+    const result = run('io-server', args)
+    assert.equal(result.status, 1, result.stderr)
+    assert.match(result.stderr, pattern)
+  }
 })

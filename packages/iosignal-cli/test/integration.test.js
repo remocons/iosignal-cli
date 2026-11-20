@@ -226,3 +226,21 @@ test('removed and invalid server settings fail before listening', { timeout: 100
     assert.match(child.output, pattern, args.join(' '))
   }
 })
+
+test('real CLI serves the dashboard on its WebSocket port and hides the token', { timeout: 15000 }, async t => {
+  const server = launch(['bin/io-server.js', '-l', '0', '--dashboard', '/ops', '--dashboard-access', 'token', '-o'],
+    { IOSIGNAL_DASHBOARD_TOKEN: 'env-token-123' })
+  t.after(() => stop(server))
+  await until(() => /http:\/\/localhost:\d+\/ops/.test(server.output), server)
+  const base = server.output.match(/http:\/\/localhost:\d+/)[0]
+  assert.match(server.output, /access: token/)
+  assert.doesNotMatch(server.output, /env-token-123/)
+  const page = await fetch(`${base}/ops`)
+  assert.equal(page.status, 200)
+  assert.match(await page.text(), /IOSignal Dashboard/)
+  assert.equal((await fetch(`${base}/ops/io.js`)).status, 200)
+  const client = new IO(base.replace('http', 'ws'))
+  client.autoReconnect = false
+  t.after(() => client.destroy())
+  await until(() => client.stateName === 'ready')
+})

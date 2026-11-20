@@ -84,6 +84,18 @@ Quotas:
   anonymous (256 KiB messages); --anonymous-quota selects another, e.g. unlimited
   for local tests with large messages.
 
+Dashboard:
+  --dashboard serves a live status page on the WebSocket port (needs -l):
+  http://<host>:<port>/dashboard. Access is open by default, meant for a LAN;
+  on a server reachable from the Internet use --dashboard-access admin
+  (an admin account logs in on the page) or token (IOSIGNAL_DASHBOARD_TOKEN).
+
+Behind a proxy:
+  A client's address decides its home channel (# tags), so it must be right.
+  --trust-proxy private (default) uses X-Forwarded-For only from loopback or
+  private peers, such as nginx or Caddy on the same host or Docker network;
+  never ignores it (clients connect directly); <hops> trusts that many proxies.
+
 Redis:
   --auth-redis and the redis service use REDIS_HOST (default: localhost)
   and REDIS_PORT (default: 6379). Connect timeout: 5000 ms; no auto-reconnect.
@@ -98,5 +110,8 @@ Examples:
   io-server -l 7777 -k lab2026 -M
   io-server -l 7777 -r -a reply redis
   io-server -l 7777 -m 5000 -s
+  io-server -l 7777 -L 8888 --dashboard
+  io-server -l 7777 -d ./auth.json --dashboard --dashboard-access admin
+  io-server -l 7777 --trust-proxy never
 
   Alias: ios. Use io-client -h for client and interactive command help.`
