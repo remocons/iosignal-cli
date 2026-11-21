@@ -1,8 +1,8 @@
 // Smoke test of the default start (no arguments), run inside the image:
-//   node smoke-defaults.mjs <server host> <expected device count> <dashboard: on|off>
+//   node smoke-defaults.mjs <server host> <expected device count> <dashboard: on|off> [names the devices must include, comma list]
 import { IO, IOCongSocket } from 'iosignal'
 
-const [host = 'localhost', devicesWanted = '6', dashboard = 'on'] = process.argv.slice(2)
+const [host = 'localhost', devicesWanted = '6', dashboard = 'on', mustInclude = ''] = process.argv.slice(2)
 const wait = ms => new Promise(r => setTimeout(r, ms))
 const ready = (io, name) => new Promise((resolve, reject) => {
   const timer = setTimeout(() => reject(new Error(`${name}: no ready`)), 5000)
@@ -40,6 +40,8 @@ try {
   await wait(2500)
   const found = [...names.values()].filter(Boolean).sort()
   if (found.length !== Number(devicesWanted)) throw new Error(`virtual devices: ${found.length} (${found.join(', ')}), wanted ${devicesWanted}`)
+  const missing = mustInclude.split(',').filter(Boolean).filter(name => !found.some(f => f.startsWith(name)))
+  if (missing.length) throw new Error(`virtual devices: missing ${missing.join(', ')} (found ${found.join(', ')})`)
   console.log(`ok   virtual devices: ${found.length}${found.length ? ` (${found.join(', ')})` : ''}`)
   app.stop()
   process.exit(0)

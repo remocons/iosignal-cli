@@ -23,15 +23,17 @@ docker run --rm -p 7777:7777 -p 55488:55488 ghcr.io/remocons/iosignal
 | CongSocket 55488 (Arduino) | 켜짐. IOSignal Arduino의 기본 포트라 보드는 서버 주소만 이 컴퓨터로 바꾸면 됨 | 인자로 직접 |
 | 사용자 페이지 `/site/` | 켜짐. 이미지에 예제 페이지(장치 패널, 신호 보기, 3D 로봇 팔)가 들어 있음 | `-v ./www:/data/www:ro`로 내 페이지 |
 | 대시보드 `/dashboard` | 꺼짐 | `-e IOSIGNAL_DASHBOARD_TOKEN=<8자 이상>`이면 토큰 접근으로 켜짐(페이지가 토큰을 물음) |
-| 가상 장치 | 꺼짐. 이미지에 예제 장치 6개(조명, 선풍기, 온습도계, 펌프, 카운터, 로봇 팔)가 들어 있음 | `-e IOSIGNAL_DEVICES=1`이면 `/data/devices`의 장치를 실행. `-v ./devices:/data/devices:ro`로 내 장치 |
+| 가상 장치 | **로봇 팔과 RGB 조명 두 개만** 실행. 로봇 페이지와 장치 패널에 바로 보일 것이 있도록. 이미지에는 예제 장치 6개(조명, 선풍기, 온습도계, 펌프, 카운터, 로봇 팔)가 들어 있음 | `-e IOSIGNAL_DEVICES=1`이면 `/data/devices`의 장치 전부, `0`이면 없음. 내 장치는 `-v ./devices:/data/devices:ro`와 `IOSIGNAL_DEVICES=1` |
 
 ```bash
 docker run --rm -p 7777:7777 -p 55488:55488 -e IOSIGNAL_DASHBOARD_TOKEN=change-me-please ghcr.io/remocons/iosignal
-docker run --rm -p 7777:7777 -p 55488:55488 -e IOSIGNAL_DEVICES=1 ghcr.io/remocons/iosignal      # 예제 가상 장치까지
+docker run --rm -p 7777:7777 -p 55488:55488 -e IOSIGNAL_DEVICES=1 ghcr.io/remocons/iosignal      # 예제 가상 장치 6개 전부
+docker run --rm -p 7777:7777 -p 55488:55488 -e IOSIGNAL_DEVICES=0 ghcr.io/remocons/iosignal      # 가상 장치 없이(운영)
 docker run --rm -p 7777:7777 -p 55488:55488 -v ./www:/data/www:ro ghcr.io/remocons/iosignal
 ```
 
-- **가상 장치를 기본으로 켜지 않는 이유:** 가짜 장치가 같은 홈채널의 모든 앱에 진짜 장치처럼 나타납니다(같은 LAN과 이 호스트의 앱에만 보이고 인터넷 사용자에게는 보이지 않음). 시험이나 데모일 때만 켭니다.
+- **가상 장치는 기본으로 두 개만:** 가상 장치는 같은 홈채널의 모든 앱에 진짜 장치처럼 나타납니다(같은 LAN과 이 호스트의 앱에만 보이고 인터넷 사용자에게는 보이지 않음). 처음 쓰는 사람이 로봇 페이지와 장치 패널을 바로 써 볼 수 있도록 로봇 팔과 조명만 켜고, 운영 서버에서는 `IOSIGNAL_DEVICES=0`으로 끕니다.
+- `/data/devices`에 내 폴더를 마운트하면 `IOSIGNAL_DEVICES=1`을 함께 줍니다. 주지 않으면 그 폴더에서 `robot-arm.device.js`, `living-lamp.device.js`만 찾습니다.
 - 토큰 없이 대시보드를 공개(`open`)하려면 인자로 `--dashboard`를 직접 줍니다. 그 포트에 닿는 누구나 서버 상태를 보므로 LAN에서만 씁니다.
 - `/data` 전체를 마운트하면 이미지의 예제 폴더가 가려집니다. 그 안에 `www`나 장치 파일이 없으면 그 기능은 꺼진 채로 시작합니다.
 - 로그인, 서비스(`reply`, `redis`), TLS(wss)는 기본으로 켜지지 않습니다. 아래처럼 인자로 켭니다.
@@ -72,7 +74,7 @@ PLATFORM=linux/arm/v7 ./test/smoke.sh    # 다른 플랫폼을 에뮬레이션�
 - `node_modules`는 순수 JavaScript라서 빌드하는 컴퓨터에서 한 번 설치하고 각 플랫폼 이미지에 복사합니다. 선택 의존성(네이티브 모듈)은 넣지 않습니다.
 - 베이스 이미지: amd64·arm64·arm/v6은 `node:22-alpine`, arm/v7은 `node:22-bookworm-slim`(Alpine 32비트 ARM Node가 에뮬레이션에서 시작하지 않았음).
 - 헬스체크는 Alpine의 `wget`을 쓰고, 없으면(Debian) `node`로 확인합니다. 검사마다 `node`를 띄우면 라즈베리파이 Zero에서 수 초가 걸리기 때문입니다.
-- 스모크 테스트(16개): 헬스체크, WebSocket 익명 호출과 로그인, CongSocket 호출, 웹 페이지, 가상 장치 응답, `node` 사용자, SIGTERM 종료, 그리고 인자 없는 실행 두 경우(아무것도 주지 않음 / 대시보드 토큰과 `IOSIGNAL_DEVICES=1`).
+- 스모크 테스트(21개): 헬스체크, WebSocket 익명 호출과 로그인, CongSocket 호출, 웹 페이지, 가상 장치 응답, `node` 사용자, SIGTERM 종료, 그리고 인자 없는 실행 세 경우(아무것도 주지 않음: 로봇 팔과 조명 / `IOSIGNAL_DEVICES=0`: 없음 / 대시보드 토큰과 `IOSIGNAL_DEVICES=1`: 6개)와 잘못된 `IOSIGNAL_DEVICES` 값 거부.
 
 ## 공개하기 (관리자)
 
@@ -92,5 +94,5 @@ PLATFORM=linux/arm/v7 ./test/smoke.sh    # 다른 플랫폼을 에뮬레이션�
 
 ## 검증 기록
 
-- 2026-11-21, 9.23.1: 4개 플랫폼 모두 스모크 테스트 16개 통과(arm64는 Apple silicon에서, amd64·arm/v7·arm/v6은 에뮬레이션). `PUSH=1`을 로컬 레지스트리로 시험(플랫폼 4개, 태그 5개, 인덱스 주석, 다시 받아 실행).
+- 2026-11-21, 9.23.1: 4개 플랫폼 모두 스모크 테스트 21개 통과(기본으로 로봇 팔과 조명)(arm64는 Apple silicon에서, amd64·arm/v7·arm/v6은 에뮬레이션). `PUSH=1`을 로컬 레지스트리로 시험(플랫폼 4개, 태그 5개, 인덱스 주석, 다시 받아 실행).
 - 실물 라즈베리파이(특히 Zero, arm/v6)에서는 아직 확인하지 않았습니다.

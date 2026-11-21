@@ -31,8 +31,8 @@ ENV NODE_ENV=production \
     HEALTH_PORT=7777
 COPY --from=deps /app /app
 # /data: working directory for -f log files and mounted auth files. It also holds the starter pages and
-# virtual devices of io-init (iosignal-cli templates/starter): the default start serves the pages, and runs the
-# devices only with IOSIGNAL_DEVICES=1. Mount your own folders over /data/www and /data/devices to replace them.
+# virtual devices of io-init (iosignal-cli templates/starter): the default start serves the pages and runs the
+# robot arm and the lamp (IOSIGNAL_DEVICES=1: all, 0: none). Mount your own folders over /data/www and /data/devices to replace them.
 RUN install -d -o node -g node /data \
  && cp -R /app/node_modules/iosignal-cli/templates/starter/www /data/www \
  && cp -R /app/node_modules/iosignal-cli/templates/starter/devices /data/devices
@@ -48,6 +48,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --start-interval=2s 
   CMD if command -v wget >/dev/null; then wget -q -O /dev/null "http://127.0.0.1:${HEALTH_PORT}/healthz"; \
       else node -e "fetch('http://127.0.0.1:'+process.env.HEALTH_PORT+'/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"; fi
 # Arguments go to io-server unchanged. Without any, iosignal-start runs -l 7777 -L 55488 --web with the pages
-# in /data/www, the virtual devices in /data/devices only with IOSIGNAL_DEVICES=1 and, when
+# in /data/www, the robot arm and lamp from /data/devices (IOSIGNAL_DEVICES=1: all, 0: none) and, when
 # IOSIGNAL_DASHBOARD_TOKEN is set, the dashboard with token access (see entrypoint.sh).
 ENTRYPOINT ["iosignal-start"]

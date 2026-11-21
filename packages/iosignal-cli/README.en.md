@@ -266,7 +266,7 @@ It does not write into a folder that exists and is not empty.
 
 ## Docker
 
-The image `ghcr.io/remocons/iosignal` (amd64, arm64, Raspberry Pi arm/v7 and arm/v6) runs io-server. Without arguments it serves the device control page, example pages (`/site/`) and CongSocket 55488 for Arduino; the dashboard comes on with `IOSIGNAL_DASHBOARD_TOKEN` and virtual devices with `IOSIGNAL_DEVICES=1`.
+The image `ghcr.io/remocons/iosignal` (amd64, arm64, Raspberry Pi arm/v7 and arm/v6) runs io-server. Without arguments it serves the device control page, example pages (`/site/`) CongSocket 55488 for Arduino and a virtual robot arm and lamp; the dashboard comes on with `IOSIGNAL_DASHBOARD_TOKEN`, all example devices with `IOSIGNAL_DEVICES=1`, and no virtual devices with `IOSIGNAL_DEVICES=0`.
 
 ```sh
 docker run --rm -p 7777:7777 -p 55488:55488 ghcr.io/remocons/iosignal

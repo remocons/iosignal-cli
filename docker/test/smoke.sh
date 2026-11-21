@@ -39,9 +39,10 @@ took=$(( $(date +%s) - start ))
 [ "$code" = 0 ] && [ $took -lt 5 ] && echo "ok   SIGTERM stop (exit $code, ${took}s)" \
   || { docker logs "$NAME"; echo "FAIL stop: exit $code after ${took}s"; exit 1; }
 
-# Default start (no arguments): once as it is (no devices, no dashboard), once with a token and IOSIGNAL_DEVICES=1.
-defaults() { # $1 label, $2 expected device count, $3 dashboard on|off, rest: docker run options
-  label=$1 want=$2 dash=$3; shift 3
+# Default start (no arguments): as it is (robot arm and lamp, no dashboard), with IOSIGNAL_DEVICES=0,
+# and with a dashboard token and IOSIGNAL_DEVICES=1 (all six starter devices).
+defaults() { # $1 label, $2 expected device count, $3 dashboard on|off, $4 names that must be there, rest: docker run options
+  label=$1 want=$2 dash=$3 names=$4; shift 4
   docker rm -f "$NAME" >/dev/null 2>&1 || true
   docker run -d $P --name "$NAME" --network "$NET" "$@" "$IMAGE" >/dev/null
   i=0
@@ -52,8 +53,13 @@ defaults() { # $1 label, $2 expected device count, $3 dashboard on|off, rest: do
   sleep 2 # the virtual devices connect after the server
   echo "ok   $label: $(docker logs "$NAME" 2>&1 | grep -m1 '^io-server ')"
   docker run --rm $P --network "$NET" -v "$PWD/smoke-defaults.mjs:/app/smoke-defaults.mjs:ro" \
-    --entrypoint node "$IMAGE" /app/smoke-defaults.mjs "$NAME" "$want" "$dash"
+    --entrypoint node "$IMAGE" /app/smoke-defaults.mjs "$NAME" "$want" "$dash" "$names"
 }
-defaults "no arguments" 0 off
-defaults "no arguments, dashboard token, IOSIGNAL_DEVICES=1" 6 on -e IOSIGNAL_DASHBOARD_TOKEN=smoke-dashboard-token -e IOSIGNAL_DEVICES=1
+defaults "no arguments" 2 off "로봇 팔,거실 조명"
+defaults "no arguments, IOSIGNAL_DEVICES=0" 0 off "" -e IOSIGNAL_DEVICES=0
+defaults "no arguments, dashboard token, IOSIGNAL_DEVICES=1" 6 on "로봇 팔" -e IOSIGNAL_DASHBOARD_TOKEN=smoke-dashboard-token -e IOSIGNAL_DEVICES=1
+# A wrong value stops the start with a message instead of guessing.
+docker rm -f "$NAME" >/dev/null 2>&1 || true
+out=$(docker run --rm $P -e IOSIGNAL_DEVICES=yes "$IMAGE" 2>&1) && { echo "FAIL IOSIGNAL_DEVICES=yes started"; exit 1; }
+echo "$out" | grep -q "must be 0 or 1" && echo "ok   IOSIGNAL_DEVICES=yes refused" || { echo "$out"; echo "FAIL IOSIGNAL_DEVICES=yes message"; exit 1; }
 echo "smoke test passed${PLATFORM:+ ($PLATFORM)}"

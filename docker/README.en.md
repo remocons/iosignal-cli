@@ -23,15 +23,17 @@ Open `http://localhost:7777/` (device control page) and `http://localhost:7777/s
 | CongSocket 55488 (Arduino) | On. It is the IOSignal Arduino default port, so a board only needs this computer's address as its server | With arguments |
 | Your pages at `/site/` | On. The image holds example pages (device panel, signals, 3D robot arm) | `-v ./www:/data/www:ro` for your own |
 | Dashboard `/dashboard` | Off | `-e IOSIGNAL_DASHBOARD_TOKEN=<8+ characters>` turns it on with token access (the page asks for the token) |
-| Virtual devices | Off. The image holds six example devices (lamp, fan, thermo-hygrometer, pump, counter, robot arm) | `-e IOSIGNAL_DEVICES=1` runs the devices in `/data/devices`; `-v ./devices:/data/devices:ro` for your own |
+| Virtual devices | **Only the robot arm and the RGB lamp**, so the robot page and the device panel have something to show at once. The image holds six example devices (lamp, fan, thermo-hygrometer, pump, counter, robot arm) | `-e IOSIGNAL_DEVICES=1` runs every device in `/data/devices`, `0` none. For your own, `-v ./devices:/data/devices:ro` with `IOSIGNAL_DEVICES=1` |
 
 ```bash
 docker run --rm -p 7777:7777 -p 55488:55488 -e IOSIGNAL_DASHBOARD_TOKEN=change-me-please ghcr.io/remocons/iosignal
-docker run --rm -p 7777:7777 -p 55488:55488 -e IOSIGNAL_DEVICES=1 ghcr.io/remocons/iosignal      # with the example virtual devices
+docker run --rm -p 7777:7777 -p 55488:55488 -e IOSIGNAL_DEVICES=1 ghcr.io/remocons/iosignal      # all six example devices
+docker run --rm -p 7777:7777 -p 55488:55488 -e IOSIGNAL_DEVICES=0 ghcr.io/remocons/iosignal      # no virtual devices (production)
 docker run --rm -p 7777:7777 -p 55488:55488 -v ./www:/data/www:ro ghcr.io/remocons/iosignal
 ```
 
-- **Why virtual devices are off by default:** they look like real devices to every app in the same home channel (only apps on the same LAN or this host see them, not users from the internet). Turn them on for tests and demos.
+- **Only two virtual devices by default:** virtual devices look like real ones to every app in the same home channel (only apps on the same LAN or this host see them, not users from the internet). The robot arm and the lamp run so a first-time user can try the robot page and the device panel at once; on a production server turn them off with `IOSIGNAL_DEVICES=0`.
+- With your own folder mounted on `/data/devices`, also pass `IOSIGNAL_DEVICES=1`; otherwise only `robot-arm.device.js` and `living-lamp.device.js` are looked for there.
 - For an open dashboard without a token, pass `--dashboard` as an argument. Anyone who reaches the port sees the server status, so use it on a LAN only.
 - Mounting all of `/data` hides the example folders; a feature whose folder or device files are missing then starts off.
 - Logins, services (`reply`, `redis`) and TLS (wss) are not on by default; turn them on with arguments as below.
@@ -72,7 +74,7 @@ PLATFORM=linux/arm/v7 ./test/smoke.sh    # test another platform under emulation
 - `node_modules` is plain JavaScript: it is installed once on the build machine and copied into every platform's image. Optional (native) dependencies are left out.
 - Base images: `node:22-alpine` for amd64, arm64 and arm/v6; `node:22-bookworm-slim` for arm/v7 (Alpine's 32-bit ARM Node did not start under emulation).
 - The health check uses Alpine's `wget`, or `node` where there is none (Debian): starting `node` for every check takes seconds on a Raspberry Pi Zero.
-- Smoke test (16 checks): health check, anonymous WebSocket call and login, CongSocket call, web pages, a virtual device answering, the `node` user, SIGTERM stop, and two starts without arguments (nothing set / a dashboard token with `IOSIGNAL_DEVICES=1`).
+- Smoke test (21 checks): health check, anonymous WebSocket call and login, CongSocket call, web pages, a virtual device answering, the `node` user, SIGTERM stop, three starts without arguments (nothing set: robot arm and lamp / `IOSIGNAL_DEVICES=0`: none / a dashboard token with `IOSIGNAL_DEVICES=1`: six), and a wrong `IOSIGNAL_DEVICES` value refused.
 
 ## Publish (maintainers)
 
@@ -92,5 +94,5 @@ Try `PUSH=1 IMAGE=localhost:5055/iosignal ./build.sh` against a local registry f
 
 ## Verification
 
-- 2026-11-21, 9.23.1: all four platforms pass the 16 smoke checks (arm64 on Apple silicon; amd64, arm/v7 and arm/v6 under emulation). `PUSH=1` tried against a local registry (four platforms, five tags, index annotations, pulled back and run).
+- 2026-11-21, 9.23.1: all four platforms pass the 21 smoke checks (robot arm and lamp by default) (arm64 on Apple silicon; amd64, arm/v7 and arm/v6 under emulation). `PUSH=1` tried against a local registry (four platforms, five tags, index annotations, pulled back and run).
 - Not yet checked on real Raspberry Pi boards (especially the Zero, arm/v6).

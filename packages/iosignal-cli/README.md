@@ -264,7 +264,7 @@ npm start                                # io-server -l 7777 -L 55488 --web --si
 
 ## Docker
 
-io-server를 담은 이미지 `ghcr.io/remocons/iosignal`(amd64, arm64, 라즈베리파이 arm/v7·arm/v6)이 있습니다. 인자 없이 실행하면 장치 제어 페이지, 예제 페이지(`/site/`), Arduino용 CongSocket 55488이 켜지고, 대시보드는 `IOSIGNAL_DASHBOARD_TOKEN`, 가상 장치는 `IOSIGNAL_DEVICES=1`일 때 켜집니다.
+io-server를 담은 이미지 `ghcr.io/remocons/iosignal`(amd64, arm64, 라즈베리파이 arm/v7·arm/v6)이 있습니다. 인자 없이 실행하면 장치 제어 페이지, 예제 페이지(`/site/`), Arduino용 CongSocket 55488, 가상 로봇 팔과 조명이 켜집니다. 대시보드는 `IOSIGNAL_DASHBOARD_TOKEN`을 줄 때, 예제 가상 장치 전부는 `IOSIGNAL_DEVICES=1`, 가상 장치 없이는 `IOSIGNAL_DEVICES=0`입니다.
 
 ```sh
 docker run --rm -p 7777:7777 -p 55488:55488 ghcr.io/remocons/iosignal
