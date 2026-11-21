@@ -6,7 +6,7 @@
 
 | 패키지 | 폴더 | 내용 |
 | --- | --- | --- |
-| [iosignal-cli](https://www.npmjs.com/package/iosignal-cli) | [packages/iosignal-cli](packages/iosignal-cli/README.md) | IOSignal 서버(`io-server`)와 대화형 클라이언트(`io-client`), 키 생성(`io-keygen`), IP 확인(`ioip`) |
+| [iosignal-cli](https://www.npmjs.com/package/iosignal-cli) | [packages/iosignal-cli](packages/iosignal-cli/README.md) | IOSignal 서버(`io-server`)와 대화형 클라이언트(`io-client`), 키 생성(`io-keygen`), IP 확인(`ioip`), 가상 장치(`io-device`), 시작용 폴더(`io-init`) |
 | [remocon](https://www.npmjs.com/package/remocon) | [packages/remocon](packages/remocon/README.md) | 한 번 보내기, 줄 입력, 키 입력, 대화형 모드를 갖춘 명령 전송 CLI(`remocon`, `remote`) |
 
 ```sh

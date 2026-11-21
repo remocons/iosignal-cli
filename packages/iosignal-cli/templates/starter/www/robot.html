@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>로봇 팔</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="robot.css">
+<!-- 3D는 three.js(CDN)를 씁니다. 인터넷이 없으면 3D만 빠지고 조종은 그대로 됩니다. -->
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<header><h1>우리집</h1><nav aria-label="페이지">
+  <a href="./">전체</a>
+  <a href="room.html">거실</a>
+  <a href="signals.html">신호 보기</a>
+  <a href="robot.html" aria-current="page">로봇</a>
+</nav></header>
+<main class="robot">
+  <section class="stage" aria-label="로봇 팔 3D 화면">
+    <canvas id="scene"></canvas>
+    <div class="hud">
+      <span id="mode" class="chip">찾는 중…</span>
+      <span id="link" class="chip muted">연결 중…</span>
+    </div>
+    <p id="scene-note" class="scene-note" hidden></p>
+  </section>
+
+  <section class="panel" aria-label="조종">
+    <label class="device">
+      <span>장치</span>
+      <select id="device" aria-label="로봇 장치"></select>
+    </label>
+
+    <div class="actions">
+      <button data-cmd="home">처음 자세</button>
+      <button data-cmd="wave">손 흔들기</button>
+      <button data-cmd="dance">춤</button>
+      <button data-cmd="stop" class="danger">멈춤</button>
+    </div>
+
+    <div id="joints" class="joints"></div>
+
+    <label class="led">
+      <span>LED</span>
+      <input id="led" type="color" value="#38bdf8">
+      <span class="swatches">
+        <button data-led="#38bdf8" style="--c:#38bdf8" aria-label="하늘색"></button>
+        <button data-led="#22c55e" style="--c:#22c55e" aria-label="초록"></button>
+        <button data-led="#f59e0b" style="--c:#f59e0b" aria-label="주황"></button>
+        <button data-led="#ef4444" style="--c:#ef4444" aria-label="빨강"></button>
+        <button data-led="#a855f7" style="--c:#a855f7" aria-label="보라"></button>
+      </span>
+    </label>
+
+    <details class="keys">
+      <summary>키보드로 조종</summary>
+      <table>
+        <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>몸통</td></tr>
+        <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>어깨</td></tr>
+        <tr><td><kbd>W</kbd> <kbd>S</kbd></td><td>팔꿈치</td></tr>
+        <tr><td><kbd>A</kbd> <kbd>D</kbd></td><td>손목</td></tr>
+        <tr><td><kbd>Space</kbd></td><td>집게 열기·닫기</td></tr>
+        <tr><td><kbd>H</kbd></td><td>처음 자세</td></tr>
+      </table>
+    </details>
+
+    <p class="note">장치 파일은 <code>devices/robot-arm.device.js</code>, 이 페이지 코드는 <code>robot.js</code>입니다.
+      명령은 <code>&lt;cid&gt;@</code>로 <code>elbow=90</code>처럼 보내고, 화면은 장치의 <code>$state</code>를 그립니다.</p>
+  </section>
+</main>
+<script type="module" src="robot.js"></script>
+</body>
+</html>

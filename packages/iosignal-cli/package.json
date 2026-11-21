@@ -11,7 +11,8 @@
     "io": "bin/io-client.js",
     "ioip": "bin/ioip.js",
     "io-keygen": "bin/io-keygen.js",
-    "io-device": "bin/io-device.js"
+    "io-device": "bin/io-device.js",
+    "io-init": "bin/io-init.js"
   },
   "author": {
     "name": "Taeo Lee",

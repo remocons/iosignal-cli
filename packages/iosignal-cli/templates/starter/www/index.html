@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리집 장치</title>
+<link rel="stylesheet" href="style.css">
+<!-- io-server가 제공하는 장치 패널 -->
+<script type="module" src="/components/iosignal-devices.js"></script>
+</head>
+<body>
+<header><h1>우리집</h1><nav aria-label="페이지">
+  <a href="./" aria-current="page">전체</a>
+  <a href="room.html">거실</a>
+  <a href="signals.html">신호 보기</a>
+  <a href="robot.html">로봇</a>
+</nav></header>
+<main>
+  <p class="note">같은 홈채널의 장치를 모두 찾아 분류별로 보여 줍니다. 회원 전용 서버(-M)라면 아래 태그에 login 속성을 더하세요.</p>
+  <iosignal-devices bus-info="off"></iosignal-devices>
+</main>
+</body>
+</html>

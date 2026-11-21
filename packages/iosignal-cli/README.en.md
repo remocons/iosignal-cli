@@ -228,6 +228,25 @@ io-server -l 7777 --web --dashboard                  # server status page at /da
 io-device ./devices -c wss://io.iosignal.net/ws      # virtual devices on another broker, no server
 ```
 
+### Starter folder: `io-init`
+
+Creates a folder with example pages and virtual devices. Try it with npx, without a global install.
+
+```sh
+npx -p iosignal-cli io-init my-home      # create the folder (--port 8080, --install)
+cd my-home
+npm install
+npm start                                # io-server -l 7777 --web --site ./www --devices ./devices --dashboard
+```
+
+Open `http://localhost:7777/site/`. The folder holds:
+
+- Pages (`www/`): the device panel, one category and single cards, finding devices and sending commands with `/lib/io.js` alone, and a 3D robot arm drawn with three.js (loaded from a CDN). The page text is in Korean.
+- Virtual devices (`devices/`): a lamp, a fan, a thermo-hygrometer, a pump, a counter and a robot arm
+- `package.json`: depends on this iosignal-cli version and provides `npm start` and `npm run devices` (devices only)
+
+It does not write into a folder that exists and is not empty.
+
 - **`-w, --web`:** a page at `/` that finds and controls the devices of its home channel (the same public IP; on a LAN, the whole LAN).
   `--web-access members` makes the page ask for an ID and key before it connects (needs `-M`: the server keeps anonymous connections
   out, so devices log in too). `/#<cid>` goes to that device's card.

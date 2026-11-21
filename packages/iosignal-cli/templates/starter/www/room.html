@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>거실</title>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="/components/iosignal-devices.js"></script>
+</head>
+<body>
+<header><h1>우리집</h1><nav aria-label="페이지">
+  <a href="./">전체</a>
+  <a href="room.html" aria-current="page">거실</a>
+  <a href="signals.html">신호 보기</a>
+  <a href="robot.html">로봇</a>
+</nav></header>
+<main>
+  <h2>분류 하나만: category="거실"</h2>
+  <iosignal-devices category="거실" bus-info="off"></iosignal-devices>
+
+  <h2>장치 카드 하나씩: &lt;iosignal-device-card cid="…"&gt;</h2>
+  <p class="note">CID는 "신호 보기" 페이지나 대시보드에서 확인합니다. 주소에 <code>?cid=1413,?k3vd</code>처럼 붙이면 그 장치들의 카드를 놓습니다.
+    HTML에 <code>&lt;iosignal-device-card cid="1413"&gt;&lt;/iosignal-device-card&gt;</code>로 바로 적어도 됩니다.</p>
+  <div class="cards" id="cards"></div>
+</main>
+<script type="module" src="room.js"></script>
+</body>
+</html>
