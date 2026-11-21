@@ -1,6 +1,6 @@
 {
   "name": "iosignal-cli",
-  "version": "9.23.0",
+  "version": "9.23.1",
   "description": "IOSignal server and client CLI program.",
   "type": "module",
   "bin": {

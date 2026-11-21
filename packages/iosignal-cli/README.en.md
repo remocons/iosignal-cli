@@ -2,7 +2,7 @@
 
 [한국어](README.md) | [English](README.en.md)
 
-The CLI package version is **9.23.0** and uses IOSignal **9.23.0** or later. In 9.23.0 io-server serves, on the same port, a device control page (`--web`), your own pages (`--site`), virtual devices (`--devices`) and a dashboard (`--dashboard`), and there is a new `io-device` command ([Web pages and virtual devices](#web-pages-and-virtual-devices)). Since 9.0.0 authentication entries use a role and a quota profile instead of a level, and server output options were renamed. Coming from 8.x, see [Upgrading from 8.x](#upgrading-from-8x).
+The CLI package version is **9.23.1** and uses IOSignal **9.23.0** or later. 9.23.1 adds the `io-init` command, which creates a folder of example pages and virtual devices ([Starter folder: `io-init`](#starter-folder-io-init)). In 9.23.0 io-server serves, on the same port, a device control page (`--web`), your own pages (`--site`), virtual devices (`--devices`) and a dashboard (`--dashboard`), and there is a new `io-device` command ([Web pages and virtual devices](#web-pages-and-virtual-devices)). Since 9.0.0 authentication entries use a role and a quota profile instead of a level, and server output options were renamed. Coming from 8.x, see [Upgrading from 8.x](#upgrading-from-8x).
 
 iosignal-cli runs an IOSignal server or an interactive client.
 
