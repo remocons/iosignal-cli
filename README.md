@@ -14,6 +14,8 @@ npm install -g iosignal-cli
 npm install -g remocon
 ```
 
+io-server는 Docker 이미지(`ghcr.io/remocons/iosignal`)로도 실행할 수 있습니다. 빌드와 사용법은 [docker/](docker/README.md)에 있습니다.
+
 ## 개발
 
 Node.js 22.16 이상이 필요합니다. npm workspaces를 씁니다.

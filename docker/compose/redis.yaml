@@ -1,0 +1,23 @@
+# IOSignal server that reads its keys from Redis (-r) and serves the redis service (-a redis).
+# Add keys with io-keygen / the iosignal-cli Redis tools before devices log in.
+#   docker compose -f compose/redis.yaml up -d
+services:
+  iosignal:
+    image: ghcr.io/remocons/iosignal:latest
+    restart: unless-stopped
+    command: ["-l", "7777", "-L", "55488", "--web", "-r", "-a", "reply", "redis"]
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    ports:
+      - "7777:7777"
+      - "55488:55488"
+    depends_on:
+      - redis
+  redis:
+    image: redis:7.4.12
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data   # not published to the host
+volumes:
+  redis-data:

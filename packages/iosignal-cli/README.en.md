@@ -264,6 +264,16 @@ It does not write into a folder that exists and is not empty.
 - `GET /healthz` answers `{"status":"ok"}` (for container health checks). A port already in use ends io-server with
   `port N is already in use`.
 
+## Docker
+
+The image `ghcr.io/remocons/iosignal` (amd64, arm64, Raspberry Pi arm/v7 and arm/v6) runs io-server. Without arguments it serves the device control page, example pages (`/site/`) and CongSocket 55488 for Arduino; the dashboard comes on with `IOSIGNAL_DASHBOARD_TOKEN` and virtual devices with `IOSIGNAL_DEVICES=1`.
+
+```sh
+docker run --rm -p 7777:7777 -p 55488:55488 ghcr.io/remocons/iosignal
+```
+
+Usage and building are in the repository's [docker/README.en.md](https://github.com/remocons/iosignal-cli/blob/main/docker/README.en.md).
+
 ## Tests
 
 `npm test` checks option validation and real local WebSocket communication.

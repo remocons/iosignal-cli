@@ -262,6 +262,16 @@ npm start                                # io-server -l 7777 -L 55488 --web --si
   `always`, `never`, 또는 프록시 단계 수.
 - `GET /healthz`는 `{"status":"ok"}`로 답합니다(컨테이너 헬스체크용). 포트가 이미 쓰이면 `port N is already in use`를 출력하고 끝납니다.
 
+## Docker
+
+io-server를 담은 이미지 `ghcr.io/remocons/iosignal`(amd64, arm64, 라즈베리파이 arm/v7·arm/v6)이 있습니다. 인자 없이 실행하면 장치 제어 페이지, 예제 페이지(`/site/`), Arduino용 CongSocket 55488이 켜지고, 대시보드는 `IOSIGNAL_DASHBOARD_TOKEN`, 가상 장치는 `IOSIGNAL_DEVICES=1`일 때 켜집니다.
+
+```sh
+docker run --rm -p 7777:7777 -p 55488:55488 ghcr.io/remocons/iosignal
+```
+
+자세한 사용법과 빌드는 저장소의 [docker/README.md](https://github.com/remocons/iosignal-cli/blob/main/docker/README.md)에 있습니다.
+
 ## 테스트
 
 `npm test`는 옵션 검증과 실제 로컬 WebSocket 통신을 검사합니다.

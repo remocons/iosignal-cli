@@ -1,0 +1,26 @@
+# wss:// with automatic certificates: Caddy takes 443 and forwards to the IOSignal server.
+# Set DOMAIN to a name whose DNS points at this host, and keep ports 80/443 reachable.
+#   DOMAIN=io.example.com docker compose -f compose/tls.yaml up -d
+# Clients connect to wss://$DOMAIN (any path). Keys come from ./auth.json (-d), members only (-M).
+services:
+  iosignal:
+    image: ghcr.io/remocons/iosignal:latest
+    restart: unless-stopped
+    command: ["-l", "7777", "--web", "--web-access", "members", "-d", "/data/auth.json", "-M"]
+    volumes:
+      - ./auth.json:/data/auth.json:ro
+    expose:
+      - "7777"
+  caddy:
+    image: caddy:2.10.2
+    restart: unless-stopped
+    command: ["caddy", "reverse-proxy", "--from", "${DOMAIN:?set DOMAIN}", "--to", "iosignal:7777"]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data
+    depends_on:
+      - iosignal
+volumes:
+  caddy-data:

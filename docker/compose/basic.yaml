@@ -1,0 +1,17 @@
+# IOSignal server with the default start: WebSocket 7777 with the device control page at /, CongSocket 55488
+# for Arduino and the starter pages at /site/. Virtual devices and the dashboard are off unless set below.
+#   docker compose -f compose/basic.yaml up -d
+services:
+  iosignal:
+    image: ghcr.io/remocons/iosignal:latest
+    restart: unless-stopped
+    # no command: the default start (see entrypoint.sh)
+    environment:
+      # IOSIGNAL_DASHBOARD_TOKEN: "change-me-8+chars"   # turns on /dashboard with this token
+      # IOSIGNAL_DEVICES: "1"                          # run the virtual devices in /data/devices (demo)
+    ports:
+      - "7777:7777"
+      - "55488:55488"
+    # volumes:                                         # your own pages and devices instead of the starter ones
+    #   - ./www:/data/www:ro
+    #   - ./devices:/data/devices:ro
