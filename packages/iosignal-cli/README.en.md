@@ -233,17 +233,17 @@ io-device ./devices -c wss://io.iosignal.net/ws      # virtual devices on anothe
 Creates a folder with example pages and virtual devices. Try it with npx, without a global install.
 
 ```sh
-npx -p iosignal-cli io-init my-home      # create the folder (--port 8080, --install)
+npx -p iosignal-cli io-init my-home      # create the folder (--port 8080, --arduino-port 0, --install)
 cd my-home
 npm install
-npm start                                # io-server -l 7777 --web --site ./www --devices ./devices --dashboard
+npm start                                # io-server -l 7777 -L 55488 --web --site ./www --devices ./devices --dashboard
 ```
 
 Open `http://localhost:7777/site/`. The folder holds:
 
 - Pages (`www/`): the device panel, one category and single cards, finding devices and sending commands with `/lib/io.js` alone, and a 3D robot arm drawn with three.js (loaded from a CDN). The page text is in Korean.
 - Virtual devices (`devices/`): a lamp, a fan, a thermo-hygrometer, a pump, a counter and a robot arm
-- `package.json`: depends on this iosignal-cli version and provides `npm start` and `npm run devices` (devices only)
+- `package.json`: depends on this iosignal-cli version and provides `npm start` and `npm run devices` (devices only). `npm start` also opens CongSocket port 55488 for Arduino (the IOSignal Arduino default): set a board's server to this computer's address (`ioip`) and it shows up on the pages. Change it with `--arduino-port`; `0` leaves it closed.
 
 It does not write into a folder that exists and is not empty.
 

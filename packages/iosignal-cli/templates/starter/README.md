@@ -46,7 +46,7 @@ npm start
 `npm start`는 `package.json`의 다음 명령을 실행합니다. 이 폴더의 `node_modules`에 설치된 iosignal-cli를 쓰므로 전역 설치가 필요 없습니다.
 
 ```sh
-io-server -l 7777 --web --site ./www --devices ./devices --dashboard
+io-server -l 7777 -L 55488 --web --site ./www --devices ./devices --dashboard
 ```
 
 | 스크립트 | 하는 일 |
@@ -59,6 +59,8 @@ io-server -l 7777 --web --site ./www --devices ./devices --dashboard
 | `http://localhost:7777/` | 내장 장치 제어 페이지 |
 | `http://localhost:7777/site/` | 이 폴더의 `www/` |
 | `http://localhost:7777/dashboard` | 서버 상태, 가상 장치 표 |
+
+**아두이노 보드:** `-L 55488`은 아두이노가 쓰는 CongSocket(TCP) 포트입니다(IOSignal Arduino의 기본 포트). 스케치나 보드 설정(https://arduino.iosignal.net/wifi/)의 서버를 이 컴퓨터 주소(`npx ioip`로 확인)로, 포트를 55488로 두면 보드가 이 서버에 붙고 페이지에 장치로 나옵니다. 포트를 바꾸거나 닫으려면 `package.json`의 `-L` 값을 고치거나 지웁니다.
 
 같은 LAN의 휴대폰에서는 `localhost` 대신 `ioip`로 나온 주소를 씁니다. `/site/`를 첫 화면으로 하려면 `--home site`를 더합니다.
 

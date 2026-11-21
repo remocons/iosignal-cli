@@ -234,17 +234,17 @@ io-device ./devices -c wss://io.iosignal.net/ws      # 서버 없이 다른 브�
 페이지와 가상 장치 예제가 든 폴더를 만듭니다. 전역 설치 없이 npx로 바로 시험할 수 있습니다.
 
 ```sh
-npx -p iosignal-cli io-init my-home      # 폴더 만들기 (--port 8080, --install)
+npx -p iosignal-cli io-init my-home      # 폴더 만들기 (--port 8080, --arduino-port 0, --install)
 cd my-home
 npm install
-npm start                                # io-server -l 7777 --web --site ./www --devices ./devices --dashboard
+npm start                                # io-server -l 7777 -L 55488 --web --site ./www --devices ./devices --dashboard
 ```
 
 `http://localhost:7777/site/`를 엽니다. 폴더에는 다음이 들어 있습니다.
 
 - 페이지(`www/`): 장치 패널, 분류·카드 하나씩, 컴포넌트 없이 `/lib/io.js`로 찾기·명령 보내기, three.js로 그린 3D 로봇 팔 조종(three.js는 CDN에서 받음)
 - 가상 장치(`devices/`): 조명, 선풍기, 온습도계, 펌프, 카운터, 로봇 팔
-- `package.json`: 이 버전의 iosignal-cli를 의존성으로 두고 `npm start`, `npm run devices`(장치만)를 제공
+- `package.json`: 이 버전의 iosignal-cli를 의존성으로 두고 `npm start`, `npm run devices`(장치만)를 제공. `npm start`는 아두이노용 CongSocket 포트 55488(IOSignal Arduino의 기본 포트)도 엽니다. 보드의 서버를 이 컴퓨터 주소(`ioip`)로 두면 페이지에 장치로 나옵니다. `--arduino-port`로 바꾸고, `0`이면 열지 않습니다.
 
 이미 있고 비어 있지 않은 폴더에는 만들지 않습니다.
 

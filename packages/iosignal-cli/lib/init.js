@@ -7,6 +7,9 @@ import pkg from '../package.json' with { type: 'json' }
 
 export const TEMPLATES = fileURLToPath(new URL('../templates/', import.meta.url))
 export const DEFAULT_TEMPLATE = 'starter'
+export const DEFAULT_PORT = 7777
+// The CongSocket (TCP) port Arduino IOSignal connects to unless a sketch sets another (IOSignal.h).
+export const ARDUINO_PORT = 55488
 
 /** Template names: the folders under templates/. */
 export function templateNames() {
@@ -19,15 +22,19 @@ export function packageName(dir) {
   return name.slice(0, 214) || 'iosignal-home'
 }
 
-/** The package.json of a new project: npm start runs io-server on www/ and devices/. */
-export function projectPackage(name, port = 7777) {
+/**
+ * The package.json of a new project: npm start runs io-server on www/ and devices/, with the
+ * WebSocket port for pages and the CongSocket port for Arduino boards (0 leaves it closed).
+ */
+export function projectPackage(name, port = DEFAULT_PORT, arduinoPort = ARDUINO_PORT) {
+  const cong = arduinoPort ? ` -L ${arduinoPort}` : ''
   return {
     name,
     version: '0.1.0',
     private: true,
     description: 'IOSignal pages and virtual devices',
     scripts: {
-      start: `io-server -l ${port} --web --site ./www --devices ./devices --dashboard`,
+      start: `io-server -l ${port}${cong} --web --site ./www --devices ./devices --dashboard`,
       devices: `io-device ./devices -c ws://localhost:${port} -w`,
     },
     dependencies: { 'iosignal-cli': `^${pkg.version}` },
@@ -37,10 +44,11 @@ export function projectPackage(name, port = 7777) {
 /**
  * Creates the project. Refuses a folder that exists and is not empty.
  * @param {string} dir the new folder
- * @param {{ template?: string, port?: number }} [options]
+ * @param {{ template?: string, port?: number, arduinoPort?: number }} [options] arduinoPort 0: no CongSocket port
  * @returns {{ dir: string, files: string[] }} the folder and the files written, relative to it
  */
-export function createProject(dir, { template = DEFAULT_TEMPLATE, port = 7777 } = {}) {
+export function createProject(dir, { template = DEFAULT_TEMPLATE, port = DEFAULT_PORT, arduinoPort = ARDUINO_PORT } = {}) {
+  if (arduinoPort && arduinoPort === port) throw new Error(`the page port and the Arduino port are both ${port}: choose two ports`)
   const source = path.join(TEMPLATES, template)
   if (!templateNames().includes(template)) throw new Error(`unknown template '${template}' (${templateNames().join(', ')})`)
   const target = path.resolve(dir)
@@ -50,7 +58,7 @@ export function createProject(dir, { template = DEFAULT_TEMPLATE, port = 7777 } 
   }
   fs.mkdirSync(target, { recursive: true })
   fs.cpSync(source, target, { recursive: true, errorOnExist: true, force: false })
-  fs.writeFileSync(path.join(target, 'package.json'), JSON.stringify(projectPackage(packageName(target), port), null, 2) + '\n')
+  fs.writeFileSync(path.join(target, 'package.json'), JSON.stringify(projectPackage(packageName(target), port, arduinoPort), null, 2) + '\n')
   // npm leaves .gitignore out of packages, so it is written here.
   fs.writeFileSync(path.join(target, '.gitignore'), 'node_modules/\n*.log\n')
   return { dir: target, files: listFiles(target) }

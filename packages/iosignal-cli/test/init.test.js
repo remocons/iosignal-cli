@@ -37,7 +37,7 @@ test('createProject copies the template and writes package.json and .gitignore',
   const written = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'))
   assert.equal(written.name, 'my-home')
   assert.equal(written.private, true)
-  assert.equal(written.scripts.start, 'io-server -l 8080 --web --site ./www --devices ./devices --dashboard')
+  assert.equal(written.scripts.start, 'io-server -l 8080 -L 55488 --web --site ./www --devices ./devices --dashboard')
   assert.equal(written.dependencies['iosignal-cli'], `^${pkg.version}`)
 })
 
@@ -61,6 +61,15 @@ test('package names come from the folder name', () => {
   assert.equal(projectPackage('a').scripts.devices, 'io-device ./devices -c ws://localhost:7777 -w')
 })
 
+test('the Arduino (CongSocket) port is open by default, can move or be left closed', t => {
+  assert.equal(projectPackage('a').scripts.start, 'io-server -l 7777 -L 55488 --web --site ./www --devices ./devices --dashboard')
+  assert.equal(projectPackage('a', 7777, 9000).scripts.start, 'io-server -l 7777 -L 9000 --web --site ./www --devices ./devices --dashboard')
+  assert.equal(projectPackage('a', 7777, 0).scripts.start, 'io-server -l 7777 --web --site ./www --devices ./devices --dashboard')
+  const base = tempDir(t)
+  assert.throws(() => createProject(path.join(base, 'same'), { port: 9000, arduinoPort: 9000 }), /both 9000/)
+  assert.equal(fs.existsSync(path.join(base, 'same')), false)
+})
+
 test('io-init command creates the folder and prints the next steps', t => {
   const base = tempDir(t)
   const result = spawnSync(process.execPath, [BIN, 'site', '--port', '7801'], { cwd: base, encoding: 'utf8' })
@@ -68,6 +77,11 @@ test('io-init command creates the folder and prints the next steps', t => {
   assert.match(result.stdout, /Created site \(\d+ files, template starter\)/)
   assert.match(result.stdout, /npm start/)
   assert.match(result.stdout, /http:\/\/localhost:7801\/site\//)
+  assert.match(result.stdout, /Arduino boards: .* port 55488/)
+  const noArduino = spawnSync(process.execPath, [BIN, 'web-only', '--arduino-port', '0'], { cwd: base, encoding: 'utf8' })
+  assert.equal(noArduino.status, 0, noArduino.stderr)
+  assert.doesNotMatch(noArduino.stdout, /Arduino boards/)
+  assert.doesNotMatch(fs.readFileSync(path.join(base, 'web-only', 'package.json'), 'utf8'), / -L /)
   assert.ok(fs.existsSync(path.join(base, 'site', 'devices', 'robot-arm.device.js')))
 
   const again = spawnSync(process.execPath, [BIN, 'site'], { cwd: base, encoding: 'utf8' })
