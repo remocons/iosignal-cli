@@ -1,0 +1,38 @@
+# Publishes one workspace package to npm when its tag is pushed: iosignal-cli@<version> or remocon@<version>,
+# with npm Trusted Publishing (OIDC): no npm token is stored anywhere. Set up once per package on npmjs.com
+# (iosignal-cli and remocon): Settings → Trusted Publisher → GitHub Actions, this repository, workflow file
+# publish.yml, environment npm.
+name: Publish to npm
+on:
+  push:
+    tags: ['iosignal-cli@*', 'remocon@*']
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: npm with Trusted Publishing (11.5.1 or later)
+        run: npm install -g npm@^11.5.1
+      - name: Package and version from the tag
+        id: tag
+        run: |
+          name="${GITHUB_REF_NAME%@*}"; version="${GITHUB_REF_NAME#*@}"
+          case "$name" in iosignal-cli|remocon) ;; *) echo "unknown package $name"; exit 1 ;; esac
+          actual="$(node -p "require('./packages/$name/package.json').version")"
+          test "$actual" = "$version" || { echo "tag $GITHUB_REF_NAME does not match packages/$name $actual"; exit 1; }
+          if npm view "$name@$version" version >/dev/null 2>&1; then echo "$name@$version is already on npm"; exit 1; fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - run: npm ci
+      - run: npm test
+      - run: npm publish -w "${{ steps.tag.outputs.name }}" --provenance --access public
