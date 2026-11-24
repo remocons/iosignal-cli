@@ -3,7 +3,7 @@
   "private": true,
   "description": "Pinned npm packages installed into the IOSignal server image. Bump both versions together and run npm install --package-lock-only.",
   "dependencies": {
-    "iosignal": "9.23.1",
-    "iosignal-cli": "9.23.1"
+    "iosignal": "10.0.0",
+    "iosignal-cli": "10.0.0"
   }
 }

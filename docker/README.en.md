@@ -2,9 +2,9 @@
 
 [한국어](README.md) | [English](README.en.md)
 
-An image with `io-server` from the published [iosignal-cli](../packages/iosignal-cli/README.en.md) (iosignal-cli 9.23.1, iosignal 9.23.1). The versions are pinned exactly in `package.json` and `package-lock.json`.
+An image with `io-server` from the published [iosignal-cli](../packages/iosignal-cli/README.en.md) (iosignal-cli 10.0.0, iosignal 10.0.0). The versions are pinned exactly in `package.json` and `package-lock.json`.
 
-Image: `ghcr.io/remocons/iosignal` (tags `9.23.1`, `9.23`, `9`, `latest`, `9.23.1-core9.23.1`)
+Image: `ghcr.io/remocons/iosignal` (tags `10.0.0`, `10.0`, `10`, `latest`, `10.0.0-core10.0.0`. The 9.x tags stay: they cannot log in with 10.0.0 clients)
 Platforms: `linux/amd64`, `linux/arm64`, `linux/arm/v7` (Raspberry Pi with a 32-bit OS), `linux/arm/v6` (Raspberry Pi Zero, 1)
 
 ## Run
@@ -94,5 +94,6 @@ Try `PUSH=1 IMAGE=localhost:5055/iosignal ./build.sh` against a local registry f
 
 ## Verification
 
+- 2026-11-24, 10.0.0: all four platforms pass the 21 smoke checks, the 10.0.0 key login included (arm64 on Apple silicon; amd64, arm/v7 and arm/v6 under emulation). Login and encryption moved to Ascon (boho 3), so 9.x clients connect to this image only anonymously.
 - 2026-11-21, 9.23.1: all four platforms pass the 21 smoke checks (robot arm and lamp by default) (arm64 on Apple silicon; amd64, arm/v7 and arm/v6 under emulation). `PUSH=1` tried against a local registry (four platforms, five tags, index annotations, pulled back and run).
 - Not yet checked on real Raspberry Pi boards (especially the Zero, arm/v6).

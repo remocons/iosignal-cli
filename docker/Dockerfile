@@ -14,7 +14,7 @@ ARG TARGETOS TARGETARCH TARGETVARIANT
 FROM --platform=$BUILDPLATFORM ${NODE_IMAGE} AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-# --omit=optional and --ignore-scripts: no native modules (iosignal 9.23 has no optional ones; ws uses
+# --omit=optional and --ignore-scripts: no native modules (iosignal 10 has no optional ones; ws uses
 # JavaScript), so every platform installs without build tools.
 RUN npm ci --omit=dev --omit=optional --ignore-scripts --no-audit --no-fund && npm cache clean --force
 

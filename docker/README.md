@@ -2,9 +2,9 @@
 
 [한국어](README.md) | [English](README.en.md)
 
-npm에 배포된 [iosignal-cli](../packages/iosignal-cli/README.md)의 `io-server`를 담은 이미지입니다(iosignal-cli 9.23.1, iosignal 9.23.1). 버전은 `package.json`과 `package-lock.json`에 정확히 고정합니다.
+npm에 배포된 [iosignal-cli](../packages/iosignal-cli/README.md)의 `io-server`를 담은 이미지입니다(iosignal-cli 10.0.0, iosignal 10.0.0). 버전은 `package.json`과 `package-lock.json`에 정확히 고정합니다.
 
-이미지 이름: `ghcr.io/remocons/iosignal` (태그 `9.23.1`, `9.23`, `9`, `latest`, `9.23.1-core9.23.1`)
+이미지 이름: `ghcr.io/remocons/iosignal` (태그 `10.0.0`, `10.0`, `10`, `latest`, `10.0.0-core10.0.0`. 9.x 태그도 남아 있음: 10.0.0과 로그인 호환이 아님)
 플랫폼: `linux/amd64`, `linux/arm64`, `linux/arm/v7`(라즈베리파이 32비트 OS), `linux/arm/v6`(라즈베리파이 Zero·1)
 
 ## 실행
@@ -94,5 +94,6 @@ PLATFORM=linux/arm/v7 ./test/smoke.sh    # 다른 플랫폼을 에뮬레이션�
 
 ## 검증 기록
 
+- 2026-11-24, 10.0.0: 4개 플랫폼 모두 스모크 테스트 21개 통과(10.0.0 키 로그인 포함)(arm64는 Apple silicon에서, amd64·arm/v7·arm/v6은 에뮬레이션). 로그인·암호화가 Ascon(boho 3)으로 바뀌어 9.x 클라이언트는 이 이미지에 익명으로만 접속합니다.
 - 2026-11-21, 9.23.1: 4개 플랫폼 모두 스모크 테스트 21개 통과(기본으로 로봇 팔과 조명)(arm64는 Apple silicon에서, amd64·arm/v7·arm/v6은 에뮬레이션). `PUSH=1`을 로컬 레지스트리로 시험(플랫폼 4개, 태그 5개, 인덱스 주석, 다시 받아 실행).
 - 실물 라즈베리파이(특히 Zero, arm/v6)에서는 아직 확인하지 않았습니다.
