@@ -105,7 +105,8 @@ Redis:
 Examples:
   io-server -l 7777
   io-server -L 8888
-  io-server -l 7777 -L 8888 -t 50000 -q unlimited
+  io-server -l 7777 -L 8888 -t 50000
+  io-server -l 7777 -q msgPerSec=100,maxMessageBytes=262144 --connection-limits maxPerAddress=200
   io-server -l 7777 -d ./auth_file_sample/auth_file.json
   io-server -l 7777 -e uno.uno-key.uno,admin.admin-key.admin.admin
   io-server -l 7777 -L 8888 --id-key
