@@ -31,8 +31,16 @@ jobs:
           case "$name" in iosignal-cli|remocon) ;; *) echo "unknown package $name"; exit 1 ;; esac
           actual="$(node -p "require('./packages/$name/package.json').version")"
           test "$actual" = "$version" || { echo "tag $GITHUB_REF_NAME does not match packages/$name $actual"; exit 1; }
-          if npm view "$name@$version" version >/dev/null 2>&1; then echo "$name@$version is already on npm"; exit 1; fi
           echo "name=$name" >> "$GITHUB_OUTPUT"
-      - run: npm ci
-      - run: npm test
-      - run: npm publish -w "${{ steps.tag.outputs.name }}" --provenance --access public
+          # Already on npm (published by hand before the tag was pushed): nothing to do. The run ends as
+          # success with a notice instead of failing, so no failure email; a wrong tag still fails above.
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "::notice::$name@$version is already on npm; skipping publish"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.tag.outputs.skip != 'true'
+        run: npm ci
+      - if: steps.tag.outputs.skip != 'true'
+        run: npm test
+      - if: steps.tag.outputs.skip != 'true'
+        run: npm publish -w "${{ steps.tag.outputs.name }}" --provenance --access public
