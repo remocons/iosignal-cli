@@ -7,7 +7,7 @@ remocon 패키지 버전은 **10.0.0**이며 IOSignal **10.0.0** 이상을 사�
 IOSignal 서버에 연결하여 단발 명령, 줄 단위 입력, 키 단위 입력, 대화형 명령을 실행합니다. Node.js 22.16.0 이상이 필요합니다.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/packages/remocon/docs/assets/iosignal-ecosystem.png" alt="IOSignal로 연결되는 서버, CLI, Node.js, Arduino와 원격 제어 웹앱" width="720" />
+  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/packages/remocon/docs/assets/iosignal-ecosystem.png" alt="IOSignal로 연결되는 서버, CLI, Node.js, Arduino, Python과 원격 제어 웹앱" width="720" />
 </p>
 
 ## 설치와 실행

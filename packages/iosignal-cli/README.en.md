@@ -7,7 +7,7 @@ The CLI package version is **10.0.0** and uses IOSignal **10.0.0** or later. In 
 iosignal-cli runs an IOSignal server or an interactive client.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/packages/iosignal-cli/docs/assets/iosignal-ecosystem.png" alt="Server, CLI, Node.js, Arduino and remote web apps connected through IOSignal" width="720" />
+  <img src="https://raw.githubusercontent.com/remocons/iosignal-cli/main/packages/iosignal-cli/docs/assets/iosignal-ecosystem.png" alt="Server, CLI, Node.js, Arduino, Python and a remote web app connected through IOSignal" width="720" />
 </p>
 
 ## Installation
