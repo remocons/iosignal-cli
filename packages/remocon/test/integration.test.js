@@ -23,8 +23,9 @@ function launch(t, args, input, binary = 'remocon') {
   if (input !== undefined) child.stdin.end(input)
   return child
 }
+// The server limits anonymous messages to 1 MiB, as an operator would (iosignal limits nothing by default).
 async function fixture(t, auth = false) {
-  const server = new Server({ port: 0, congPort: 0 }, auth ? new BohoAuth(new StringKeyProvider('uno.uno-key.uno')) : undefined)
+  const server = new Server({ port: 0, congPort: 0, quotas: { guest: { maxMessageBytes: 1024 * 1024 } }, anonymousQuota: 'guest' }, auth ? new BohoAuth(new StringKeyProvider('uno.uno-key.uno')) : undefined)
   server.attach('reply', replyService)
   await once(server, 'ready')
   t.after(() => new Promise(resolve => server.close(resolve)))

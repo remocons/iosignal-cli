@@ -198,21 +198,21 @@ test('--shared-key with --members-only logs in any ID and drops anonymous signal
 })
 
 test('server settings: heartbeat interval, stats and message logs, anonymous quota and role entries', { timeout: 15000 }, async t => {
-  const server = launch(['bin/io-server.js', '-l', '0', '-t', '2000', '-m', '0', '-s', '-q', 'unlimited',
+  const server = launch(['bin/io-server.js', '-l', '0', '-t', '2000', '-m', '0', '-s', '-q', 'maxMessageBytes=null',
     '-e', 'uno.uno-key.uno,adm.adm-key.adm.admin', '-a', 'sudo'])
   t.after(() => stop(server))
   await until(() => /ws:\/\/localhost:\d+/.test(server.output), server)
   const url = server.output.match(/ws:\/\/localhost:\d+/)[0]
-  // Anonymous connections use the unlimited profile: no local message size limit.
+  // -q limits for anonymous connections; maxMessageBytes=null: no message size limit.
   const anonymous = new IO()
   t.after(() => anonymous.stop())
   const ready = new Promise(resolve => anonymous.once('ready', resolve))
   anonymous.open(url)
   await ready
   assert.deepEqual(anonymous.quota, { maxMessageBytes: null })
-  // A device (default quota basic) may not use sudo; the admin role may.
+  // A device may not use sudo; the admin role may.
   const [device] = await login(t, url, 'uno', 'uno-key')
-  assert.deepEqual(device.quota, { maxMessageBytes: 1024 * 1024 })
+  assert.deepEqual(device.quota, { maxMessageBytes: null }) // no quota in the key entry: no limits
   await assert.rejects(device.call('sudo', 'cid'))
   const [admin] = await login(t, url, 'adm', 'adm-key')
   assert.equal((await admin.call('sudo', 'cid')).ok, true)
@@ -221,7 +221,7 @@ test('server settings: heartbeat interval, stats and message logs, anonymous quo
 
 test('removed and invalid server settings fail before listening', { timeout: 10000 }, async () => {
   for (const [args, pattern] of [[['--timeout', '2000'], /unknown option/], [['--metric', '1'], /unknown option/],
-    [['-q', 'gold'], /anonymousQuota must be one of the quotas/], [['-e', 'uno.key.uno.3'], /invalid key entry/]]) {
+    [['-q', 'gold'], /anonymousQuota must be (null or )?one of the quotas/], [['-q', 'msgPerSec=x'], /must be an integer/], [['-e', 'uno.key.uno.3'], /invalid key entry/]]) {
     const child = launch(['bin/io-server.js', '-l', '0', ...args])
     await child.done
     assert.match(child.output, pattern, args.join(' '))

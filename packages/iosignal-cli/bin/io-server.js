@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { connectRedis, closeRedis } from '../lib/redis.js'
-import { port, heartbeatInterval, logStats, trustProxy, dashboardPath, dashboardAccess } from '../lib/cli.js'
+import { port, heartbeatInterval, logStats, trustProxy, dashboardPath, dashboardAccess, limitList, anonymousQuota } from '../lib/cli.js'
+import { readFileSync } from 'node:fs'
 import { program, InvalidArgumentError } from 'commander'
 import { serverHelp } from '../lib/help.js'
 import { serverInfo } from './serverInfo.js';
@@ -33,7 +34,9 @@ program
   .option('-t, --heartbeat-interval <milliseconds>', 'liveness check interval (1000..2147483647 ms; default: 50000)', heartbeatInterval)
   .option('-m, --log-stats <milliseconds>', 'print a stats summary every N ms (0 = off, or 1000..2147483647)', logStats)
   .option('-s, --log-messages', 'log each received message: type and tag, never the payload')
-  .option('-q, --anonymous-quota <profile>', 'quota profile of unauthenticated connections: anonymous (default), basic, pro, unlimited')
+  .option('-q, --anonymous-quota <limits|profile>', 'limit unauthenticated connections, e.g. msgPerSec=100,maxMessageBytes=262144 (default: no limits), or a profile from --quotas', anonymousQuota)
+  .option('--quotas <file>', 'JSON file of named quota profiles for -q and the quota field of key entries')
+  .option('--connection-limits <limits>', 'per public address, e.g. maxPerAddress=200,newPerAddressPerMin=300 (default: none)', limitList)
   .option('-f, --file-logger', 'write connection.log, auth.log and attack.log in the working directory')
   .option('-a, --attach-services [list...]', 'built-in services: reply sudo redis (space-separated; none by default)')
   .option('--dashboard [path]', 'serve the live status page on the WebSocket port (default path: /dashboard)', dashboardPath)
@@ -100,7 +103,15 @@ let privateServerOptions = { };
 if (options.heartbeatInterval !== undefined) privateServerOptions.heartbeatInterval = options.heartbeatInterval
 if (options.logStats !== undefined) privateServerOptions.logStats = options.logStats
 if (options.logMessages) privateServerOptions.logMessages = true
-if (options.anonymousQuota !== undefined) privateServerOptions.anonymousQuota = options.anonymousQuota
+// Nothing is limited unless asked (iosignal after 10.2.0 has no built-in quota profiles).
+if (options.quotas !== undefined) {
+  try { privateServerOptions.quotas = JSON.parse(readFileSync(options.quotas, 'utf8')) } catch (error) { program.error(`--quotas: ${error.message}`) }
+}
+if (typeof options.anonymousQuota === 'object') {
+  privateServerOptions.quotas = { ...privateServerOptions.quotas, anonymous: options.anonymousQuota }
+  privateServerOptions.anonymousQuota = 'anonymous'
+} else if (options.anonymousQuota !== undefined) privateServerOptions.anonymousQuota = options.anonymousQuota
+if (options.connectionLimits !== undefined) privateServerOptions.connectionLimits = options.connectionLimits
 let authLabel = null;
 if (options.idKey) {
   privateServerOptions.localAuth = 'idKey'

@@ -82,12 +82,14 @@ The old `.help`, `.sub`, and `.pub` syntax is unsupported; use `help`, `sub`, an
 | --- | --- |
 | `-m, --log-stats <ms>` | Print a one-line summary (connections, channels, rates, memory) every N ms; 0: off (default), or 1000 and above |
 | `-s, --log-messages` | Log the type and tag of each received message, never its payload |
-| `-q, --anonymous-quota <profile>` | Quota profile of unauthenticated connections: `anonymous` (default), `basic`, `pro`, `unlimited` |
+| `-q, --anonymous-quota <limits\|profile>` | Limits for unauthenticated connections, such as `msgPerSec=100,maxMessageBytes=262144`, or a profile name from `--quotas`. No limits by default |
+| `--quotas <file>` | JSON file of named quota profiles (`{ "basic": { "msgPerSec": 200 } }`) for the `quota` field of key entries and `-q <name>` |
+| `--connection-limits <limits>` | Per public address connection limits (`maxPerAddress=200,newPerAddressPerMin=300`, …). None by default |
 | `-f, --file-logger` | Write `connection.log`, `auth.log`, and `attack.log` in the current working directory |
 | `-a, --attach-services [list...]` | Space-separated services: `reply`, `sudo`, `redis`; none by default |
 | `-o, --show-options` | Print initial settings and registered service names |
 
-Every connection uses a quota profile (message size, publish fan-out, messages and bytes per second, connections per account). The default `anonymous` profile of unauthenticated connections accepts messages up to 256 KiB; use `-q unlimited` to test larger messages.
+Nothing is limited by default (from the IOSignal release after 10.2.0; up to 10.2.0 unauthenticated connections used the 256 KiB, 100 messages/s `anonymous` profile). When you run a server in public, turn on the limits you need: `-q` for unauthenticated connections, profiles in a `--quotas` file with the `quota` field of key entries for logins, and `--connection-limits` per address.
 
 Register built-in services when starting the server. For example, connect a client to this server and enter `call reply echo hello`:
 
@@ -108,7 +110,7 @@ Example paths are relative to the cloned repository. After a global installation
 Command-line entries use `id.key.cid[.role[.quota]]`; separate multiple entries with commas.
 
 - `role`: `device` (default), `service`, or `admin`. Only `admin` may use the `sudo` service.
-- `quota`: a quota profile name. By default a `device` uses `basic`, and `service` and `admin` use `unlimited`.
+- `quota`: the name of a profile in the `--quotas` file. Without it there are no limits.
 
 ```sh
 io-server -l 7777 --auth-param 'uno.uno-key.uno,admin.admin-key.admin.admin'
@@ -206,13 +208,13 @@ The [Redis authentication examples](test_auth_redis/) use the same environment v
 
 ```sh
 node test_auth_redis/redis_addAdmin.js admin admin-key admin
-node test_auth_redis/redis_addMultipleDevice.js uno 10 basic
+node test_auth_redis/redis_addMultipleDevice.js uno 10
 node test_auth_redis/redis_add_get_device.js
 node test_auth_redis/server-auth-redis.js
 ```
 
 The first three scripts write sample authentication data to Redis. The administrator example takes `<id> <key> <cid>` and registers it with the `admin` role.
-The multiple-device example takes `<base_id> [count] [quota]` and creates `device` entries such as `uno0` to `uno9`, each with a key identical to its ID. Without a quota, devices use `basic`.
+The multiple-device example takes `<base_id> [count] [quota]` and creates `device` entries such as `uno0` to `uno9`, each with a key identical to its ID. A quota needs a profile of that name on the server (`--quotas`); without one there are no limits.
 The administrator and multiple-device examples also call Redis `SAVE`. The server example uses WebSocket port 7777 by default.
 One-off examples close Redis connections when finished and exit with code 1 on error.
 

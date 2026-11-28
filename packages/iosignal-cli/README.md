@@ -82,12 +82,14 @@ io-server -l 7777 -m 5000 -s
 |---|---|
 | `-m, --log-stats <ms>` | N밀리초마다 연결·채널·초당 처리량·메모리 요약 한 줄 출력 (0: 끔(기본), 1000 이상) |
 | `-s, --log-messages` | 수신 메시지의 종류와 태그 로그 (내용은 출력하지 않음) |
-| `-q, --anonymous-quota <profile>` | 미인증 연결의 쿼터 프로필: `anonymous`(기본), `basic`, `pro`, `unlimited` |
+| `-q, --anonymous-quota <limits\|profile>` | 미인증 연결 제한. `msgPerSec=100,maxMessageBytes=262144`처럼 값을 주거나 `--quotas`의 프로필 이름. 기본은 제한 없음 |
+| `--quotas <file>` | 이름 붙인 쿼터 프로필 JSON 파일(`{ "basic": { "msgPerSec": 200 } }`). 인증 항목의 `quota`와 `-q <이름>`이 씀 |
+| `--connection-limits <limits>` | 공인 주소별 연결 제한(`maxPerAddress=200,newPerAddressPerMin=300` 등). 기본은 없음 |
 | `-f, --file-logger` | 현재 작업 디렉터리에 `connection.log`, `auth.log`, `attack.log` 기록 |
 | `-a, --attach-services [list...]` | `reply`, `sudo`, `redis` 중 공백으로 구분하여 지정; 기본은 없음 |
 | `-o, --show-options` | 초기 설정과 등록된 서비스 이름 출력 |
 
-모든 연결에는 쿼터 프로필이 적용됩니다(메시지 크기, 채널 발행 전달 수, 초당 메시지·바이트, 계정별 동시 연결). 미인증 연결의 기본 `anonymous` 프로필은 메시지를 256 KiB까지 받으므로, 큰 메시지를 시험하려면 `-q unlimited`를 사용하세요.
+기본으로는 아무것도 제한하지 않습니다(IOSignal 10.2.0 다음 버전부터. 10.2.0까지는 미인증 연결에 256 KiB·초당 100개 `anonymous` 프로필이 적용됨). 공개된 곳에서 운영한다면 필요한 제한을 직접 켭니다: 미인증 연결은 `-q`, 로그인한 연결은 `--quotas` 파일의 프로필과 인증 항목의 `quota`, 주소별 연결 수는 `--connection-limits`.
 
 내장 서비스를 호출하려면 서버 시작 시 등록해야 합니다. 예를 들어 다음 서버에 클라이언트로 접속한 뒤 `call reply echo hello`를 입력합니다.
 
@@ -109,7 +111,7 @@ JSON 파일은 `[id, key, cid, role?, quota?]` 배열들의 목록이며, JavaSc
 명령 인자로 지정할 때는 `id.key.cid[.role[.quota]]` 형식을 사용하고, 여러 항목은 쉼표로 구분합니다.
 
 - `role`: `device`(기본), `service`, `admin`. `sudo` 서비스는 `admin`만 쓸 수 있습니다.
-- `quota`: 쿼터 프로필 이름. 생략하면 `device`는 `basic`, `service`와 `admin`은 `unlimited`입니다.
+- `quota`: `--quotas` 파일에 있는 쿼터 프로필 이름. 생략하면 제한이 없습니다.
 
 ```sh
 io-server -l 7777 --auth-param 'uno.uno-key.uno,admin.admin-key.admin.admin'
@@ -207,13 +209,13 @@ Redis 연결이 완료된 뒤 서버를 시작하며, 연결 실패 시 오류�
 
 ```sh
 node test_auth_redis/redis_addAdmin.js admin admin-key admin
-node test_auth_redis/redis_addMultipleDevice.js uno 10 basic
+node test_auth_redis/redis_addMultipleDevice.js uno 10
 node test_auth_redis/redis_add_get_device.js
 node test_auth_redis/server-auth-redis.js
 ```
 
 앞의 세 스크립트는 Redis에 예제 인증 데이터를 기록합니다. 관리자 예제는 `<id> <key> <cid>`를 받아 `admin` 역할로 등록합니다.
-다중 장치 예제는 `<base_id> [count] [quota]`를 받아 `uno0`~`uno9`처럼 ID와 같은 키를 가진 `device` 역할 항목을 만듭니다. quota를 생략하면 `basic`입니다.
+다중 장치 예제는 `<base_id> [count] [quota]`를 받아 `uno0`~`uno9`처럼 ID와 같은 키를 가진 `device` 역할 항목을 만듭니다. quota를 주면 서버에 같은 이름의 프로필(`--quotas`)이 있어야 하고, 생략하면 제한이 없습니다.
 관리자·다중 장치 예제는 Redis `SAVE`도 호출합니다. 서버 예제의 기본 WebSocket 포트는 7777입니다.
 단발성 예제는 작업 완료 후 Redis 연결을 닫고, 오류가 발생하면 종료 코드 1을 반환합니다.
 

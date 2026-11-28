@@ -6,7 +6,7 @@ await withRedis(async redisClient => {
   let auth = new BohoAuth( new RedisKeyProvider( redisClient))
 
   // node test_auth_redis/redis_addMultipleDevice.js <base_id> [count] [quota]
-  // e.g. node test_auth_redis/redis_addMultipleDevice.js uno 10 basic
+  // e.g. node test_auth_redis/redis_addMultipleDevice.js uno 10   (a quota needs that profile on the server: --quotas)
   // addAuth(did, key, cid, role, quota): devices with key = id.
   let baseId = process.argv[2] ? process.argv[2] : 'uno'
   let n = integer(process.argv[3] ?? 10, 'count', 1, 10000);

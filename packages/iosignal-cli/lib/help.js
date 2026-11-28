@@ -67,7 +67,7 @@ Listening:
 Authentication:
   --auth-param accepts id.key.cid[.role[.quota]] entries separated by commas.
   role: device (default), service or admin (admin may use sudo).
-  quota: a quota profile; default basic for a device, unlimited otherwise.
+  quota: a profile from --quotas; none (no limits) by default.
   If combined, precedence is --auth-file > --auth-param > --auth-redis.
   Without an authentication option, no authentication provider is configured.
   --id-key and --shared-key enable logins without a key list for local tests:
@@ -77,12 +77,14 @@ Authentication:
   --members-only drops signals from anonymous connections.
   Clients log in with io-client -i <id> -k <key>.
 
-Quotas:
-  Every connection uses a quota profile (message size, publish fan-out,
-  message and byte rates, connections per account), always enforced.
-  Profiles: anonymous, basic, pro, unlimited. Unauthenticated connections use
-  anonymous (256 KiB messages); --anonymous-quota selects another, e.g. unlimited
-  for local tests with large messages.
+Limits:
+  Nothing is limited by default. Turn on what your deployment needs:
+  -q msgPerSec=100,maxMessageBytes=262144   limits for unauthenticated connections
+     (maxMessageBytes, fanout, msgPerSec, bytesPerSec, maxSubscriptions, deliveriesPerSec)
+  --quotas profiles.json   named profiles { "basic": { "msgPerSec": 200 } } for the
+     quota field of key entries (id.key.cid.device.basic) or -q <name>
+  --connection-limits maxPerAddress=200,newPerAddressPerMin=300   per public address
+     (also failedPerAddressPerMin, msgPerAddressPerSec, bytesPerAddressPerSec)
 
 Dashboard:
   --dashboard serves a live status page on the WebSocket port (needs -l):

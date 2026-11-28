@@ -45,3 +45,24 @@ export function dashboardAccess(value, env = process.env) {
   }
   throw new InvalidArgumentError('use open, admin, token (IOSIGNAL_DASHBOARD_TOKEN) or token:<value>')
 }
+
+// key=value,key=value limits for --anonymous-quota and --connection-limits: positive integers,
+// or null (unlimited). The server checks the names.
+export function limitList(value) {
+  const limits = {}
+  for (const part of String(value).split(',').map(s => s.trim()).filter(Boolean)) {
+    const [key, raw, ...rest] = part.split('=')
+    if (!key || raw === undefined || rest.length) throw new InvalidArgumentError(`use name=value pairs separated by commas (got ${part})`)
+    if (raw === 'null') { limits[key] = null; continue }
+    const number = Number(raw)
+    if (!Number.isSafeInteger(number) || number < 0) throw new InvalidArgumentError(`${key} must be an integer >= 0 or null`)
+    limits[key] = number
+  }
+  if (!Object.keys(limits).length) throw new InvalidArgumentError('give at least one name=value')
+  return limits
+}
+
+// --anonymous-quota: a profile name (from --quotas) or limits (name=value,...).
+export function anonymousQuota(value) {
+  return String(value).includes('=') ? limitList(value) : String(value)
+}
