@@ -89,7 +89,7 @@ The old `.help`, `.sub`, and `.pub` syntax is unsupported; use `help`, `sub`, an
 | `-a, --attach-services [list...]` | Space-separated services: `reply`, `sudo`, `redis`; none by default |
 | `-o, --show-options` | Print initial settings and registered service names |
 
-Nothing is limited by default (from the IOSignal release after 10.2.0; up to 10.2.0 unauthenticated connections used the 256 KiB, 100 messages/s `anonymous` profile). When you run a server in public, turn on the limits you need: `-q` for unauthenticated connections, profiles in a `--quotas` file with the `quota` field of key entries for logins, and `--connection-limits` per address.
+Nothing is limited by default (from IOSignal 10.3.0; up to 10.2.0 unauthenticated connections used the 256 KiB, 100 messages/s `anonymous` profile). When you run a server in public, turn on the limits you need: `-q` for unauthenticated connections, profiles in a `--quotas` file with the `quota` field of key entries for logins, and `--connection-limits` per address.
 
 Register built-in services when starting the server. For example, connect a client to this server and enter `call reply echo hello`:
 

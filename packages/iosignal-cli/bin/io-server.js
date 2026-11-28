@@ -103,7 +103,7 @@ let privateServerOptions = { };
 if (options.heartbeatInterval !== undefined) privateServerOptions.heartbeatInterval = options.heartbeatInterval
 if (options.logStats !== undefined) privateServerOptions.logStats = options.logStats
 if (options.logMessages) privateServerOptions.logMessages = true
-// Nothing is limited unless asked (iosignal after 10.2.0 has no built-in quota profiles).
+// Nothing is limited unless asked (iosignal 10.3.0 and later have no built-in quota profiles).
 if (options.quotas !== undefined) {
   try { privateServerOptions.quotas = JSON.parse(readFileSync(options.quotas, 'utf8')) } catch (error) { program.error(`--quotas: ${error.message}`) }
 }
